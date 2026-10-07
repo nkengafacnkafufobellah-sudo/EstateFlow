@@ -1,0 +1,7 @@
+{
+  "name": "EstateFlow Property & Security Operations",
+  "description": "Enterprise property management, lease operations, maintenance workflow, financial reconciliation, tenant & vendor portals with least-privilege RBAC security.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

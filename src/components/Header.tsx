@@ -34,7 +34,16 @@ export const Header: React.FC<HeaderProps> = ({
   notifications = INITIAL_NOTIFICATIONS,
   onMarkNotificationRead = () => {},
 }) => {
-  const { currentUser, activeRole, setActiveRole, securityControls, showSecurityNotification } = useSecurity();
+  const {
+    currentUser,
+    activeRole,
+    setActiveRole,
+    securityControls,
+    showSecurityNotification,
+    loginSession,
+    lockSession,
+    openMfaChallenge,
+  } = useSecurity();
   const { activeCurrency, setActiveCurrency, currencies } = useCurrency();
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
@@ -325,6 +334,25 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
 
+            {/* Multi-Factor Authentication (MFA) Status Badge */}
+            <button
+              type="button"
+              onClick={() =>
+                openMfaChallenge({
+                  purpose: 'login',
+                  channel: currentUser.mfaPreferredChannel || 'phone',
+                  user: currentUser,
+                })
+              }
+              className="hidden sm:inline-flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-900 border border-emerald-300 hover:bg-emerald-100 transition-colors shadow-2xs cursor-pointer"
+              title={`MFA Protection Active (${loginSession.verifiedChannel === 'phone' ? 'Phone SMS' : 'Email'}). Click to challenge or verify.`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
+              <span className="font-mono text-[11px]">
+                MFA: {loginSession.verifiedChannel === 'phone' ? 'Phone SMS' : 'Email'}
+              </span>
+            </button>
+
             {/* Role & Persona Switcher (RBAC Simulator) */}
             <div className="relative">
               <button
@@ -353,7 +381,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <p className="text-xs font-bold text-stone-900">Least-Privilege RBAC Role</p>
                     <p className="text-[11px] text-stone-500">Switch role to test access boundaries across all 8 modules:</p>
                   </div>
-                  <div className="divide-y divide-stone-100 max-h-80 overflow-y-auto">
+                  <div className="divide-y divide-stone-100 max-h-72 overflow-y-auto">
                     {INITIAL_USERS.map((user) => (
                       <button
                         key={user.id}
@@ -374,10 +402,45 @@ export const Header: React.FC<HeaderProps> = ({
                             <span className="text-[10px] font-mono px-1 rounded bg-stone-100 text-stone-600">{user.role}</span>
                           </div>
                           <p className="text-[11px] text-stone-500 truncate">{user.roleScope}</p>
-                          <div className="text-[10px] text-emerald-700 mt-0.5">MFA: {user.mfa}</div>
+                          <div className="text-[10px] text-emerald-700 mt-0.5">
+                            MFA: {user.mfa} · {user.mfaPreferredChannel === 'phone' ? 'Phone SMS' : 'Email'}
+                          </div>
                         </div>
                       </button>
                     ))}
+                  </div>
+
+                  {/* Lock Screen & MFA Trigger Actions */}
+                  <div className="p-2 border-t border-stone-100 bg-stone-50/60 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowRoleMenu(false);
+                        openMfaChallenge({
+                          purpose: 'login',
+                          channel: currentUser.mfaPreferredChannel || 'phone',
+                          user: currentUser,
+                        });
+                      }}
+                      className="flex-1 py-1 px-2 rounded-lg bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 text-[11px] font-bold flex items-center justify-center space-x-1 transition-colors cursor-pointer"
+                      title="Challenge account identity with 6-digit MFA OTP code"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5 text-amber-700" />
+                      <span>Test Login MFA</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowRoleMenu(false);
+                        lockSession();
+                      }}
+                      className="py-1 px-2.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-white text-[11px] font-bold flex items-center space-x-1 transition-colors cursor-pointer"
+                      title="Engage zero-trust workstation lock"
+                    >
+                      <Lock className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Lock</span>
+                    </button>
                   </div>
                 </div>
               )}

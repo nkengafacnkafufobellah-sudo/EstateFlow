@@ -40,6 +40,8 @@ import { PaymentGatewaysManager } from './PaymentGatewaysManager';
 import { FinanceCsvExportModal } from './FinanceCsvExportModal';
 import { MobileMoneyPaymentModal } from './MobileMoneyPaymentModal';
 import { MesombPluginManagerModal } from './MesombPluginManagerModal';
+import { RecurringPaymentHistory } from './RecurringPaymentHistory';
+import { INITIAL_RECURRING_PAYMENTS } from '../data/recurringPaymentsData';
 import { generateReconciliationCsv, downloadCsvFile } from '../utils/financeCsvExporter';
 
 export const FinanceReconciliation: React.FC = () => {
@@ -57,7 +59,7 @@ export const FinanceReconciliation: React.FC = () => {
     getReceiptForTransaction,
   } = useReceipts();
 
-  const [activeFinanceTab, setActiveFinanceTab] = useState<'ledger' | 'receipts-archive' | 'gateways'>('ledger');
+  const [activeFinanceTab, setActiveFinanceTab] = useState<'ledger' | 'recurring-history' | 'receipts-archive' | 'gateways'>('ledger');
   const [currencyFilter, setCurrencyFilter] = useState<'ALL' | SupportedCurrency>('ALL');
   const [selectedTxnId, setSelectedTxnId] = useState<string>(transactions[0]?.id || 'txn-1');
   const [receiptSearch, setReceiptSearch] = useState('');
@@ -185,6 +187,21 @@ export const FinanceReconciliation: React.FC = () => {
             </button>
 
             <button
+              onClick={() => setActiveFinanceTab('recurring-history')}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
+                activeFinanceTab === 'recurring-history'
+                  ? 'bg-white text-stone-900 shadow-xs'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <RefreshCw className="w-4 h-4 text-amber-600" />
+              <span>Recurring Payment History</span>
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-900 font-mono font-bold">
+                {INITIAL_RECURRING_PAYMENTS.length} Mandates
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveFinanceTab('receipts-archive')}
               className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
                 activeFinanceTab === 'receipts-archive'
@@ -255,7 +272,7 @@ export const FinanceReconciliation: React.FC = () => {
       </div>
 
       {/* KPI Ribbon: Reconciliation & Automated Receipt Status */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="p-3.5 bg-white border border-stone-200 rounded-2xl flex items-center justify-between shadow-2xs">
           <div>
             <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">
@@ -308,11 +325,40 @@ export const FinanceReconciliation: React.FC = () => {
             <FileText className="w-5 h-5" />
           </div>
         </div>
+
+        <div className="p-3.5 bg-white border border-stone-200 rounded-2xl flex items-center justify-between shadow-2xs">
+          <div>
+            <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">
+              Recurring Autopay Mandates
+            </div>
+            <div className="text-xl font-mono font-extrabold text-stone-900 mt-0.5 flex items-center gap-1.5">
+              <span>{INITIAL_RECURRING_PAYMENTS.filter((r) => r.autoDebitEnabled).length} Active</span>
+            </div>
+          </div>
+          <button
+            onClick={() => setActiveFinanceTab('recurring-history')}
+            className="w-10 h-10 rounded-xl bg-stone-100 hover:bg-amber-100 text-stone-700 hover:text-amber-800 flex items-center justify-center font-bold transition-colors cursor-pointer"
+            title="View Recurring Payment History & Collections"
+          >
+            <RefreshCw className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Render Gateways Manager Tab if selected */}
       {activeFinanceTab === 'gateways' ? (
         <PaymentGatewaysManager />
+      ) : activeFinanceTab === 'recurring-history' ? (
+        <RecurringPaymentHistory
+          onOpenReceiptPreview={(receiptNumber) => {
+            const foundReceipt = receipts.find((r) => r.receiptNumber === receiptNumber);
+            if (foundReceipt) {
+              openReceiptPreview(foundReceipt);
+            } else {
+              showSecurityNotification(`Receipt ${receiptNumber} preview requested.`);
+            }
+          }}
+        />
       ) : activeFinanceTab === 'receipts-archive' ? (
         /* Receipts Archive Tab */
         <div className="bg-white border border-stone-200 rounded-2xl p-5 shadow-2xs space-y-4">

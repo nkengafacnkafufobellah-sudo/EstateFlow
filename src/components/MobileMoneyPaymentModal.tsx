@@ -78,7 +78,7 @@ export const MobileMoneyPaymentModal: React.FC<MobileMoneyPaymentModalProps> = (
 }) => {
   const { exchangeRates, formatAmount, gateways } = useCurrency();
   const { recordPaymentTransaction, openReceiptPreview, downloadReceipt } = useReceipts();
-  const { showSecurityNotification } = useSecurity();
+  const { showSecurityNotification, isPaymentMfaEnforced, openMfaChallenge, currentUser } = useSecurity();
 
   // Gateway mode: 'mtn_momo' | 'orange_money' | 'mesomb'
   const [selectedGateway, setSelectedGateway] = useState<'mtn_momo' | 'orange_money' | 'mesomb'>(initialGateway);
@@ -183,7 +183,7 @@ export const MobileMoneyPaymentModal: React.FC<MobileMoneyPaymentModalProps> = (
     );
   };
 
-  const handleAuthorizeAndExecutePayment = async () => {
+  const executePaymentBackend = async () => {
     setStep('PROCESSING');
     setProcessingStatus('Connecting to MeSomb Payment Gateway API...');
 
@@ -273,6 +273,38 @@ export const MobileMoneyPaymentModal: React.FC<MobileMoneyPaymentModalProps> = (
       setErrorMessage(err.message || 'Network handshake failed with carrier endpoint.');
       setStep('ERROR');
     }
+  };
+
+  const handleAuthorizeAndExecutePayment = async () => {
+    if (isPaymentMfaEnforced) {
+      const resolvedService: MeSombService =
+        selectedGateway === 'orange_money'
+          ? 'ORANGE'
+          : selectedGateway === 'mtn_momo'
+          ? 'MTN'
+          : detectedService || 'MTN';
+
+      openMfaChallenge({
+        purpose: 'payment',
+        channel: 'phone',
+        user: currentUser,
+        paymentDetails: {
+          amount: calculatedCfa,
+          currency: 'CFA',
+          payee: 'Sunrise Holdings LLC (Rent Account)',
+          gateway: resolvedService === 'MTN' ? 'MTN Mobile Money (*126#)' : 'Orange Money (#150#)',
+          unit: unit,
+          tenantName: tenantName,
+          riskLevel: 'LOW',
+        },
+        onVerified: () => {
+          executePaymentBackend();
+        },
+      });
+      return;
+    }
+
+    executePaymentBackend();
   };
 
   const handleCopyRef = (text: string) => {
@@ -728,7 +760,7 @@ export const MobileMoneyPaymentModal: React.FC<MobileMoneyPaymentModalProps> = (
                         : 'bg-amber-600 hover:bg-amber-700'
                     }`}
                   >
-                    Authorize PIN ✓
+                    {isPaymentMfaEnforced ? 'Authorize & MFA OTP ✓' : 'Authorize PIN ✓'}
                   </button>
                 </div>
               </div>
@@ -736,11 +768,11 @@ export const MobileMoneyPaymentModal: React.FC<MobileMoneyPaymentModalProps> = (
               {/* Explanatory notes */}
               <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl text-[11px] text-stone-600 space-y-1">
                 <div className="font-bold text-stone-800 flex items-center space-x-1">
-                  <Lock className="w-3.5 h-3.5 text-amber-700" />
-                  <span>Real-Time MeSomb Security Protocol</span>
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>Real-Time MeSomb & Payment MFA Security Protocol</span>
                 </div>
                 <p>
-                  Upon authorization, MeSomb issues a signed HMAC-SHA1 webhook and carrier confirmation. The funds settle instantly into Sunrise Holdings' merchant account.
+                  Upon authorization, payment is verified through {isPaymentMfaEnforced ? 'Out-of-Band Multi-Factor Authentication (Email / SMS OTP) and ' : ''}signed HMAC-SHA1 webhook before instant settlement.
                 </p>
               </div>
             </div>

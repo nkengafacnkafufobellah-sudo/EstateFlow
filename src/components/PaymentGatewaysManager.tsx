@@ -54,7 +54,14 @@ export const PaymentGatewaysManager: React.FC = () => {
     updateMesombPluginConfig,
   } = useCurrency();
 
-  const { canPerform, activeRole, showSecurityNotification } = useSecurity();
+  const {
+    canPerform,
+    activeRole,
+    showSecurityNotification,
+    isPaymentMfaEnforced,
+    openMfaChallenge,
+    currentUser,
+  } = useSecurity();
 
   // STRICT REQUIREMENT: Only Admin and Super Admin can manage MeSomb plugin settings
   const isAdminOrSuperAdmin = activeRole === 'super_admin' || activeRole === 'admin';
@@ -830,6 +837,30 @@ export const PaymentGatewaysManager: React.FC = () => {
                         </span>
                       </button>
                     )}
+
+                    {/* Step-up Payment MFA Verification Button */}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openMfaChallenge({
+                          purpose: 'payment',
+                          channel: 'phone',
+                          user: currentUser,
+                          paymentDetails: {
+                            amount: simulationResult.amount,
+                            currency: simulationResult.currency,
+                            gateway: simulationResult.gateway?.name || 'Payment Router',
+                            payee: 'Sunrise Holdings LLC',
+                            riskLevel: 'LOW',
+                          },
+                        })
+                      }
+                      className="w-full mt-2 py-2 px-3 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs rounded-xl shadow-2xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer border border-stone-700"
+                      title="Trigger PSD2 SCA Multi-Factor Authentication step-up challenge"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Test Payment MFA Step-Up (Email / SMS)</span>
+                    </button>
                   </div>
                 )}
 

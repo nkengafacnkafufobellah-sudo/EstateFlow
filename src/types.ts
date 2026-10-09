@@ -8,14 +8,56 @@ export type UserRole =
   | 'tenant'
   | 'vendor';
 
+export type MfaChannel = 'email' | 'phone';
+export type MfaPurpose = 'login' | 'payment';
+
+export interface MfaPaymentDetails {
+  amount: number;
+  currency: string;
+  payee: string;
+  gateway: string;
+  unit?: string;
+  tenantName?: string;
+  riskLevel?: 'LOW' | 'MEDIUM' | 'ELEVATED';
+  description?: string;
+}
+
+export interface MfaChallenge {
+  id: string;
+  purpose: MfaPurpose;
+  channel: MfaChannel;
+  destinationMasked: string;
+  destinationRaw: string;
+  code: string;
+  createdAt: number;
+  expiresAt: number;
+  attempts: number;
+  maxAttempts: number;
+  paymentDetails?: MfaPaymentDetails;
+  verified: boolean;
+  user?: UserProfile;
+}
+
+export interface LoginSessionState {
+  isAuthenticated: boolean;
+  isMfaVerified: boolean;
+  verifiedChannel: MfaChannel | null;
+  lastMfaVerifiedAt: string | null;
+  sessionToken: string;
+  trustedDevice: boolean;
+  isLocked: boolean;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
   email: string;
+  phoneNumber?: string;
   role: UserRole;
   roleTitle: string;
   roleScope: string;
   mfa: 'Enforced' | 'Pending' | 'Disabled';
+  mfaPreferredChannel?: MfaChannel;
   lastActive: string;
   avatarColor: string;
 }
@@ -200,7 +242,8 @@ export type GatewayIdentifier =
   | 'paypal'
   | 'apple_pay'
   | 'google_pay'
-  | 'bank_transfer';
+  | 'bank_transfer'
+  | 'stripe_card';
 
 export interface GatewayApiConfig {
   endpointUrl: string;
@@ -462,6 +505,61 @@ export interface ApiAuditLogEntry {
   status: 'SUCCESS' | 'BLOCKED_403';
 }
 
+export type AccessEventType =
+  | 'LOGIN_SUCCESS'
+  | 'LOGIN_FAILED'
+  | 'MFA_CHALLENGE'
+  | 'MFA_VERIFIED'
+  | 'PAYMENT_MFA_CHALLENGE'
+  | 'PAYMENT_MFA_SUCCESS'
+  | 'SESSION_REFRESH'
+  | 'API_AUTHENTICATION'
+  | 'SUSPICIOUS_GEO_HOP'
+  | 'LOGOUT';
+
+export type AccessEventStatus = 'SUCCESS' | 'DENIED' | 'FLAGGED' | 'WARNING';
+export type AccessRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export interface SystemAccessEvent {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  role: string;
+  timestamp: string;
+  ipAddress: string;
+  city: string;
+  region: string;
+  country: string;
+  countryCode: string;
+  flag: string;
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+  isp: string;
+  asn?: string;
+  timezone?: string;
+  eventType: AccessEventType;
+  status: AccessEventStatus;
+  riskLevel: AccessRiskLevel;
+  riskScore: number;
+  device: string;
+  browser: string;
+  deviceType: 'Desktop' | 'Mobile' | 'Tablet' | 'API Gateway';
+  sessionTokenHash: string;
+  authMethod:
+    | 'Password + TOTP MFA'
+    | 'Biometric / Passkey'
+    | 'Bearer Token'
+    | 'SMS OTP'
+    | 'Password (No MFA)'
+    | 'Email OTP MFA'
+    | 'Phone SMS MFA'
+    | 'Payment MFA (SCA)';
+  flagReason?: string;
+}
+
 export type ScheduleEventType = 'appointment' | 'inspection';
 export type RecurrenceInterval = 'monthly' | 'quarterly' | 'semi-annual' | 'annual' | 'none';
 export type EventStatus = 'scheduled' | 'in-progress' | 'completed' | 'overdue';
@@ -485,3 +583,59 @@ export interface MaintenanceScheduleEvent {
   notes?: string;
   estimatedCost?: number;
 }
+
+export type RecurringCollectionType =
+  | 'monthly_rent'
+  | 'service_fee'
+  | 'parking_fee'
+  | 'amenity_subscription'
+  | 'utilities_charge';
+
+export type RecurringPaymentStatus =
+  | 'Settled'
+  | 'Processing'
+  | 'Scheduled'
+  | 'Failed'
+  | 'Paused'
+  | 'Retrying';
+
+export interface RecurringPaymentAttempt {
+  id: string;
+  attemptDate: string;
+  status: 'SUCCESS' | 'FAILED' | 'PENDING';
+  gatewayRef: string;
+  receiptNumber?: string;
+  failureReason?: string;
+  amount: number;
+}
+
+export interface RecurringPaymentRecord {
+  id: string;
+  mandateCode: string;
+  tenantId: string;
+  tenantName: string;
+  tenantEmail: string;
+  tenantPhone: string;
+  propertyId: string;
+  propertyName: string;
+  unit: string;
+  collectionType: RecurringCollectionType;
+  title: string;
+  billingCycle: 'Monthly (1st)' | 'Monthly (15th)' | 'Monthly (Last Day)' | 'Quarterly' | 'Bi-Weekly';
+  nextBillingDate: string;
+  lastBillingDate?: string;
+  amount: number;
+  currency: SupportedCurrency;
+  paymentMethod: string;
+  gatewayId: GatewayIdentifier;
+  gatewayMaskedAccount: string;
+  status: RecurringPaymentStatus;
+  autoDebitEnabled: boolean;
+  consecutiveSuccessCount: number;
+  totalCollectedToDate: number;
+  attemptsCount: number;
+  recentAttempts: RecurringPaymentAttempt[];
+  mandateSignedDate: string;
+  notes?: string;
+}
+

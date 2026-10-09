@@ -28,7 +28,7 @@ import { SupportedCurrency, PaymentReceipt } from '../types';
 import { MobileMoneyPaymentModal } from './MobileMoneyPaymentModal';
 
 export const TenantMobileView: React.FC = () => {
-  const { showSecurityNotification } = useSecurity();
+  const { showSecurityNotification, isPaymentMfaEnforced, openMfaChallenge, currentUser } = useSecurity();
   const {
     activeCurrency,
     currencies,
@@ -107,12 +107,7 @@ export const TenantMobileView: React.FC = () => {
     }
   };
 
-  const handlePayRent = () => {
-    if (selectedGatewayId === 'mtn_momo' || selectedGatewayId === 'orange_money' || tenantCurrency === 'CFA') {
-      setMobileMoneyModalOpen(true);
-      return;
-    }
-
+  const executeTenantPayRent = () => {
     setIsProcessingPayment(true);
     const convertedDue = convertAmount(baseRentUSD, 'USD', tenantCurrency);
     const result = simulateRoutePayment(convertedDue, tenantCurrency, selectedGatewayId as any);
@@ -136,6 +131,37 @@ export const TenantMobileView: React.FC = () => {
         `Rent payment of ${formatAmount(baseRentUSD, tenantCurrency)} confirmed! Official PDF receipt #${receipt?.receiptNumber || 'RC-2026-0412'} generated and available in your portal.`
       );
     }, 1000);
+  };
+
+  const handlePayRent = () => {
+    if (selectedGatewayId === 'mtn_momo' || selectedGatewayId === 'orange_money' || tenantCurrency === 'CFA') {
+      setMobileMoneyModalOpen(true);
+      return;
+    }
+
+    if (isPaymentMfaEnforced) {
+      const convertedDue = convertAmount(baseRentUSD, 'USD', tenantCurrency);
+      openMfaChallenge({
+        purpose: 'payment',
+        channel: 'phone',
+        user: currentUser,
+        paymentDetails: {
+          amount: Math.round(convertedDue),
+          currency: tenantCurrency,
+          payee: 'Sunrise Holdings LLC (Rent Account)',
+          gateway: gateways[selectedGatewayId as any]?.name || 'Card / Bank Direct',
+          unit: 'Unit 4B',
+          tenantName: 'Jordan Avery',
+          riskLevel: 'LOW',
+        },
+        onVerified: () => {
+          executeTenantPayRent();
+        },
+      });
+      return;
+    }
+
+    executeTenantPayRent();
   };
 
   return (

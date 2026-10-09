@@ -15,7 +15,8 @@ import { SecurityAuditPanel } from './components/SecurityAuditPanel';
 import { SuperAdminDashboard } from './components/SuperAdminDashboard';
 import { ReceiptPreviewModal } from './components/ReceiptPreviewModal';
 import { MobileMoneyPaymentModal } from './components/MobileMoneyPaymentModal';
-import { ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { MfaVerificationModal } from './components/MfaVerificationModal';
+import { ShieldCheck, AlertCircle, CheckCircle2, Lock, KeyRound } from 'lucide-react';
 import { INITIAL_NOTIFICATIONS, INITIAL_ORG } from './data/estateData';
 import { SystemNotification } from './types';
 
@@ -26,7 +27,15 @@ const AppContent: React.FC = () => {
   const [globalMobileMoneyOpen, setGlobalMobileMoneyOpen] = useState(false);
   const [notifications, setNotifications] = useState<SystemNotification[]>(INITIAL_NOTIFICATIONS);
 
-  const { securityNotification, rateLimitRemaining, isRateLimited, showSecurityNotification } = useSecurity();
+  const {
+    securityNotification,
+    rateLimitRemaining,
+    isRateLimited,
+    showSecurityNotification,
+    currentUser,
+    isSessionLocked,
+    unlockSession,
+  } = useSecurity();
   const { previewReceipt, closeReceiptPreview } = useReceipts();
 
   const handleMarkNotificationRead = (id: string) => {
@@ -144,6 +153,53 @@ const AppContent: React.FC = () => {
         initialUnit="Unit 4B"
         initialAmountUSD={1450}
       />
+
+      {/* Global Multi-Factor Authentication Modal (Login & Payment MFA) */}
+      <MfaVerificationModal />
+
+      {/* Zero-Trust Session Lock Screen Overlay */}
+      {isSessionLocked && (
+        <div className="fixed inset-0 z-40 bg-stone-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+          <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl border border-stone-200 text-center space-y-5">
+            <div className="w-16 h-16 rounded-3xl bg-amber-100 text-amber-800 mx-auto flex items-center justify-center shadow-inner">
+              <Lock className="w-8 h-8 text-amber-800" />
+            </div>
+            <div>
+              <h2 className="text-xl font-extrabold text-stone-900">Workstation Session Locked</h2>
+              <p className="text-xs text-stone-500 mt-1">
+                Zero-Trust security lock engaged. Multi-Factor Authentication verification required to resume session.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-left flex items-center space-x-3">
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${currentUser.avatarColor}`}
+              >
+                {currentUser.name.charAt(0)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-xs text-stone-900 truncate">{currentUser.name}</div>
+                <div className="text-[11px] text-amber-800 font-mono font-medium">{currentUser.roleTitle}</div>
+                <div className="text-[10px] text-stone-500 font-mono mt-0.5">
+                  Verified delivery: {currentUser.mfaPreferredChannel === 'phone' ? currentUser.phoneNumber : currentUser.email}
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={unlockSession}
+              className="w-full py-3.5 px-4 rounded-2xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-sm flex items-center justify-center space-x-2 shadow-xs transition-colors cursor-pointer"
+            >
+              <KeyRound className="w-4 h-4" />
+              <span>Unlock with MFA (Email or Phone SMS)</span>
+            </button>
+
+            <p className="text-[11px] text-stone-400">
+              6-digit cryptographic verification code will be sent to your verified device.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Global Security Toast Notification */}
       {securityNotification && (

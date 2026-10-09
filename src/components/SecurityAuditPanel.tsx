@@ -29,8 +29,12 @@ import {
   Calendar,
   CalendarRange,
   Clock,
+  Globe,
+  Smartphone,
+  Mail,
+  CreditCard,
 } from 'lucide-react';
-import { AUDIT_LOGS_DATA, RBAC_PERMISSIONS_MATRIX, AUDIT_LOG_TRAIL } from '../data/estateData';
+import { AUDIT_LOGS_DATA, RBAC_PERMISSIONS_MATRIX, AUDIT_LOG_TRAIL, INITIAL_USERS } from '../data/estateData';
 import { AuditLogEntry, UserRole } from '../types';
 import { useSecurity } from '../context/SecurityContext';
 import {
@@ -40,6 +44,7 @@ import {
   SecurityAuditReportPayload,
 } from '../utils/auditReportGenerator';
 import { SecurityDateRangePicker } from './SecurityDateRangePicker';
+import { AccessLogs } from './AccessLogs';
 import {
   TemporalWindow,
   SYSTEM_TODAY,
@@ -61,6 +66,13 @@ export const SecurityAuditPanel: React.FC = () => {
     apiAuditLogs,
     logApiAction,
     securityControls,
+    toggleSecurityControl,
+    isLoginMfaEnforced,
+    isPaymentMfaEnforced,
+    setIsLoginMfaEnforced,
+    setIsPaymentMfaEnforced,
+    openMfaChallenge,
+    loginSession,
   } = useSecurity();
 
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(AUDIT_LOGS_DATA);
@@ -227,8 +239,20 @@ export const SecurityAuditPanel: React.FC = () => {
           </p>
         </div>
 
-        {/* Header Action Buttons: Direct JSON Download & Inspector */}
+        {/* Header Action Buttons: Direct JSON Download, Inspector & Access Logs */}
         <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+          <button
+            onClick={() => {
+              const el = document.getElementById('security-access-logs-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="inline-flex items-center space-x-1.5 px-3.5 py-2 text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-xl transition-all shadow-2xs cursor-pointer"
+            title="Jump to System Access Logs and Geolocation Telemetry"
+          >
+            <Globe className="w-4 h-4 text-amber-700" />
+            <span>Access Logs</span>
+          </button>
+
           <button
             onClick={() => handleQuickDownloadJson('all', true)}
             className="inline-flex items-center space-x-2 px-3.5 py-2 text-xs font-bold text-white bg-amber-800 hover:bg-amber-900 rounded-xl transition-all shadow-xs"
@@ -720,6 +744,243 @@ export const SecurityAuditPanel: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Multi-Factor Authentication (MFA) Oversight & Dual-Channel Step-Up Policy Engine */}
+      <div className="bg-white border border-stone-200 rounded-2xl p-6 shadow-2xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-100">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
+              <ShieldCheck className="w-5 h-5 text-amber-800" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h2 className="text-base font-bold text-stone-900">
+                  Multi-Factor Authentication (MFA) Security Kernel
+                </h2>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-900 font-mono">
+                  Dual-Channel Active
+                </span>
+              </div>
+              <p className="text-xs text-stone-500 mt-0.5">
+                NIST SP 800-63B compliant session MFA and PSD2 Strong Customer Authentication (SCA) for high-value rent & mobile money debits.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() =>
+                openMfaChallenge({
+                  purpose: 'login',
+                  channel: currentUser.mfaPreferredChannel || 'phone',
+                  user: currentUser,
+                })
+              }
+              className="px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs flex items-center space-x-1.5 transition-colors cursor-pointer shadow-2xs"
+              title="Test Login MFA challenge with 6-digit cryptographic OTP"
+            >
+              <Lock className="w-3.5 h-3.5 text-amber-400" />
+              <span>Simulate Login MFA</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                openMfaChallenge({
+                  purpose: 'payment',
+                  channel: 'phone',
+                  user: currentUser,
+                  paymentDetails: {
+                    amount: 1450,
+                    currency: 'USD',
+                    payee: 'Sunrise Holdings LLC',
+                    gateway: 'MeSomb MoMo / Visa Direct',
+                    unit: 'Unit 4B',
+                    tenantName: 'Jordan Avery',
+                    riskLevel: 'LOW',
+                  },
+                })
+              }
+              className="px-3 py-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs flex items-center space-x-1.5 transition-colors cursor-pointer shadow-2xs"
+              title="Test Payment MFA Step-Up challenge"
+            >
+              <CreditCard className="w-3.5 h-3.5 text-amber-200" />
+              <span>Simulate Payment MFA</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 2-Pillar Policy Cards: Login MFA & Payment MFA */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Card 1: Login Multi-Factor Authentication */}
+          <div className="p-4 rounded-2xl bg-stone-50/80 border border-stone-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="p-2 rounded-xl bg-amber-100 text-amber-900">
+                  <Lock className="w-4 h-4 text-amber-800" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-stone-900">Login Session MFA</h3>
+                  <div className="text-[10px] text-stone-500 font-mono">NIST SP 800-63B AAL2</div>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setIsLoginMfaEnforced(!isLoginMfaEnforced)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                    isLoginMfaEnforced ? 'bg-emerald-600' : 'bg-stone-300'
+                  }`}
+                  title="Toggle Login MFA policy enforcement"
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
+                      isLoginMfaEnforced ? 'translate-x-4' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+                <span className={`text-[11px] font-bold ${isLoginMfaEnforced ? 'text-emerald-800' : 'text-stone-500'}`}>
+                  {isLoginMfaEnforced ? 'Enforced' : 'Optional'}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-stone-600 leading-relaxed">
+              Dispatches a mandatory 6-digit one-time cryptographic code (OTP) upon sign-in or elevated administrative role change. Delivery via <strong>Email</strong> or <strong>Phone SMS</strong>.
+            </p>
+
+            <div className="pt-2 border-t border-stone-200/80 grid grid-cols-2 gap-2 text-[11px]">
+              <div className="p-2 rounded-lg bg-white border border-stone-200/60 flex items-center space-x-2">
+                <Mail className="w-3.5 h-3.5 text-amber-700" />
+                <div>
+                  <span className="font-bold text-stone-800 block leading-tight">Email Delivery</span>
+                  <span className="text-[10px] text-stone-500">SMTP TLS 1.3 OTP</span>
+                </div>
+              </div>
+
+              <div className="p-2 rounded-lg bg-white border border-stone-200/60 flex items-center space-x-2">
+                <Smartphone className="w-3.5 h-3.5 text-amber-700" />
+                <div>
+                  <span className="font-bold text-stone-800 block leading-tight">Phone SMS / OM</span>
+                  <span className="text-[10px] text-stone-500">Direct Carrier Gateway</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Secure Payment Multi-Factor Authentication */}
+          <div className="p-4 rounded-2xl bg-stone-50/80 border border-stone-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="p-2 rounded-xl bg-amber-100 text-amber-900">
+                  <CreditCard className="w-4 h-4 text-amber-800" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-stone-900">Secure Payment MFA (SCA)</h3>
+                  <div className="text-[10px] text-stone-500 font-mono">PSD2 SCA & 3D-Secure 2.2</div>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setIsPaymentMfaEnforced(!isPaymentMfaEnforced)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                    isPaymentMfaEnforced ? 'bg-emerald-600' : 'bg-stone-300'
+                  }`}
+                  title="Toggle Payment MFA policy enforcement"
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
+                      isPaymentMfaEnforced ? 'translate-x-4' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+                <span className={`text-[11px] font-bold ${isPaymentMfaEnforced ? 'text-emerald-800' : 'text-stone-500'}`}>
+                  {isPaymentMfaEnforced ? 'Enforced' : 'Optional'}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-stone-600 leading-relaxed">
+              Step-up out-of-band verification required prior to finalizing payments. Enforced across <strong>MTN Mobile Money (*126#)</strong>, <strong>Orange Money (#150#)</strong>, card gateways, and recurring rent autopay.
+            </p>
+
+            <div className="pt-2 border-t border-stone-200/80 grid grid-cols-2 gap-2 text-[11px]">
+              <div className="p-2 rounded-lg bg-white border border-stone-200/60 flex items-center space-x-2">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
+                <div>
+                  <span className="font-bold text-stone-800 block leading-tight">Fraud Prevention</span>
+                  <span className="text-[10px] text-stone-500">Zero unauthorized debits</span>
+                </div>
+              </div>
+
+              <div className="p-2 rounded-lg bg-white border border-stone-200/60 flex items-center space-x-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                <div>
+                  <span className="font-bold text-stone-800 block leading-tight">HMAC Stamped</span>
+                  <span className="text-[10px] text-stone-500">Cryptographic audit log</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* User Enrolled MFA Directory */}
+        <div className="pt-2">
+          <div className="text-xs font-bold text-stone-800 mb-2.5 flex items-center justify-between">
+            <span>Enrolled User Personas & MFA Delivery Channels ({INITIAL_USERS.length}):</span>
+            <span className="text-[11px] text-stone-500 font-mono">
+              Current Session: {loginSession.verifiedChannel === 'phone' ? 'Phone SMS Verified' : 'Email Verified'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+            {INITIAL_USERS.map((u) => (
+              <div
+                key={u.id}
+                className={`p-3 rounded-xl border text-xs space-y-1.5 transition-all ${
+                  u.role === activeRole
+                    ? 'border-amber-600 bg-amber-50/60 ring-1 ring-amber-600/30'
+                    : 'border-stone-200 bg-stone-50/50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-stone-900 truncate max-w-[130px]">{u.name}</span>
+                  <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-white border border-stone-200 text-stone-700">
+                    {u.role}
+                  </span>
+                </div>
+
+                <div className="space-y-0.5 text-[11px] text-stone-600">
+                  <div className="flex items-center space-x-1.5 truncate">
+                    <Mail className="w-3 h-3 text-stone-400 flex-shrink-0" />
+                    <span className="truncate">{u.email}</span>
+                  </div>
+                  <div className="flex items-center space-x-1.5 truncate">
+                    <Smartphone className="w-3 h-3 text-stone-400 flex-shrink-0" />
+                    <span className="font-mono truncate">{u.phoneNumber || '+237 677 •• •• 20'}</span>
+                  </div>
+                </div>
+
+                <div className="pt-1 border-t border-stone-200/60 flex items-center justify-between text-[10px]">
+                  <span className="text-stone-500 font-mono">Preferred:</span>
+                  <span className="font-bold text-amber-800 font-mono">
+                    {u.mfaPreferredChannel === 'phone' ? 'Phone SMS' : 'Email OTP'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Access Logs Component (System Access Events, User IDs, Timestamps, Geolocation Telemetry) */}
+      <div id="security-access-logs-section">
+        <AccessLogs />
       </div>
 
       {/* Governance & Compliance Footer Card (Page 8 Bottom) */}

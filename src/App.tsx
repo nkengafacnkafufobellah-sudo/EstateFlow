@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { SecurityProvider, useSecurity } from './context/SecurityContext';
 import { CurrencyProvider } from './context/CurrencyContext';
 import { ReceiptsProvider, useReceipts } from './context/ReceiptsContext';
+import { PropertiesProvider } from './context/PropertiesContext';
 import { Header } from './components/Header';
 import { Navigation, NavigationTab } from './components/Navigation';
 import { CommandCenter } from './components/CommandCenter';
@@ -16,11 +17,15 @@ import { SuperAdminDashboard } from './components/SuperAdminDashboard';
 import { ReceiptPreviewModal } from './components/ReceiptPreviewModal';
 import { MobileMoneyPaymentModal } from './components/MobileMoneyPaymentModal';
 import { MfaVerificationModal } from './components/MfaVerificationModal';
+import { LandingPage } from './components/LandingPage';
+import { LoginModal } from './components/LoginModal';
 import { ShieldCheck, AlertCircle, CheckCircle2, Lock, KeyRound } from 'lucide-react';
 import { INITIAL_NOTIFICATIONS, INITIAL_ORG } from './data/estateData';
-import { SystemNotification } from './types';
+import { SystemNotification, UserRole } from './types';
 
 const AppContent: React.FC = () => {
+  const [viewMode, setViewMode] = useState<'landing' | 'platform'>('landing');
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<NavigationTab>('command-center');
   const [targetMaintenanceId, setTargetMaintenanceId] = useState<string>('MR-2481');
   const [openAddPropertyDirectly, setOpenAddPropertyDirectly] = useState(false);
@@ -33,10 +38,26 @@ const AppContent: React.FC = () => {
     isRateLimited,
     showSecurityNotification,
     currentUser,
+    setActiveRole,
     isSessionLocked,
     unlockSession,
+    logApiAction,
   } = useSecurity();
   const { previewReceipt, closeReceiptPreview } = useReceipts();
+
+  const handlePersonaDirectLogin = (role: UserRole, targetTab: NavigationTab) => {
+    setActiveRole(role);
+    setActiveTab(targetTab);
+    setViewMode('platform');
+    setIsLoginModalOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNavigateToLanding = () => {
+    setViewMode('landing');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showSecurityNotification('Navigated to EstateFlow Landing Page & Persona Showcase.');
+  };
 
   const handleMarkNotificationRead = (id: string) => {
     setNotifications((prev) =>
@@ -78,63 +99,89 @@ const AppContent: React.FC = () => {
         </div>
       )}
 
-      {/* Top Application Header */}
-      <Header
-        activeTab={activeTab}
-        notifications={notifications}
-        onMarkNotificationRead={handleMarkNotificationRead}
-        onOpenQuickAction={handleOpenQuickAction}
-        onOpenSecurityModal={() => setActiveTab('admin')}
-      />
+      {/* Conditionally Render Public Landing Page OR Authenticated Platform */}
+      {viewMode === 'landing' ? (
+        <LandingPage
+          onEnterPlatform={handlePersonaDirectLogin}
+          onOpenLogin={() => setIsLoginModalOpen(true)}
+          onSelectProperty={(propId: string) => {
+            setActiveRole('owner');
+            setActiveTab('properties');
+            setViewMode('platform');
+            showSecurityNotification('Navigated to property portfolio console.');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
+      ) : (
+        <>
+          {/* Top Application Header */}
+          <Header
+            activeTab={activeTab}
+            notifications={notifications}
+            onMarkNotificationRead={handleMarkNotificationRead}
+            onOpenQuickAction={handleOpenQuickAction}
+            onOpenSecurityModal={() => setActiveTab('admin')}
+            onNavigateLanding={handleNavigateToLanding}
+            onOpenLoginModal={() => setIsLoginModalOpen(true)}
+          />
 
-      {/* Main Tab Navigation Bar */}
-      <Navigation
-        activeTab={activeTab}
-        onSelectTab={(tab: NavigationTab) => {
-          setActiveTab(tab);
-          setOpenAddPropertyDirectly(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-        urgentMaintenanceCount={3}
-        unresolvedFinanceCount={2}
-      />
-
-      {/* Main Container Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {activeTab === 'command-center' && (
-          <CommandCenter
-            onNavigateTab={(tab: NavigationTab) => {
+          {/* Main Tab Navigation Bar */}
+          <Navigation
+            activeTab={activeTab}
+            onSelectTab={(tab: NavigationTab) => {
               setActiveTab(tab);
+              setOpenAddPropertyDirectly(false);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            onSelectMaintenanceTicket={handleSelectMaintenanceTicket}
-            onOpenQuickAction={handleOpenQuickAction}
+            urgentMaintenanceCount={3}
+            unresolvedFinanceCount={2}
           />
-        )}
 
-        {activeTab === 'properties' && (
-          <PropertiesManager
-            onNavigateToMaintenance={() => setActiveTab('maintenance')}
-            initialOpenAdd={openAddPropertyDirectly}
-          />
-        )}
+          {/* Main Container Content with Balanced, Symmetric Margin Padding */}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {activeTab === 'command-center' && (
+              <CommandCenter
+                onNavigateTab={(tab: NavigationTab) => {
+                  setActiveTab(tab);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onSelectMaintenanceTicket={handleSelectMaintenanceTicket}
+                onOpenQuickAction={handleOpenQuickAction}
+              />
+            )}
 
-        {activeTab === 'tenants' && <TenantsManager />}
+            {activeTab === 'properties' && (
+              <PropertiesManager
+                onNavigateToMaintenance={() => setActiveTab('maintenance')}
+                initialOpenAdd={openAddPropertyDirectly}
+              />
+            )}
 
-        {activeTab === 'maintenance' && (
-          <MaintenanceWorkflow initialSelectedId={targetMaintenanceId} />
-        )}
+            {activeTab === 'tenants' && <TenantsManager />}
 
-        {activeTab === 'finance' && <FinanceReconciliation />}
+            {activeTab === 'maintenance' && (
+              <MaintenanceWorkflow initialSelectedId={targetMaintenanceId} />
+            )}
 
-        {activeTab === 'tenant-app' && <TenantMobileView />}
+            {activeTab === 'finance' && <FinanceReconciliation />}
 
-        {activeTab === 'vendor-workbench' && <VendorWorkbenchView />}
+            {activeTab === 'tenant-app' && <TenantMobileView />}
 
-        {activeTab === 'admin' && <SecurityAuditPanel />}
+            {activeTab === 'vendor-workbench' && <VendorWorkbenchView />}
 
-        {activeTab === 'super-admin' && <SuperAdminDashboard />}
-      </main>
+            {activeTab === 'admin' && <SecurityAuditPanel />}
+
+            {activeTab === 'super-admin' && <SuperAdminDashboard />}
+          </main>
+        </>
+      )}
+
+      {/* Interactive Login & Persona Router Modal */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLoginSuccess={handlePersonaDirectLogin}
+      />
 
       {/* Global Receipt Preview Modal */}
       {previewReceipt && (
@@ -252,7 +299,9 @@ export default function App() {
     <SecurityProvider>
       <CurrencyProvider>
         <ReceiptsProvider>
-          <AppContent />
+          <PropertiesProvider>
+            <AppContent />
+          </PropertiesProvider>
         </ReceiptsProvider>
       </CurrencyProvider>
     </SecurityProvider>

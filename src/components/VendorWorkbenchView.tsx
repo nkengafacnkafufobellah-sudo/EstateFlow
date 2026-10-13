@@ -14,19 +14,52 @@ import {
   DollarSign,
   Send,
   ShieldCheck,
+  TrendingUp,
+  BarChart3,
+  Award,
+  ArrowRight,
+  Edit2,
+  Settings,
+  Save,
+  X,
+  Phone,
+  Mail,
 } from 'lucide-react';
 import { VENDOR_JOBS_DATA, VENDOR_PAYOUT_HISTORY } from '../data/estateData';
 import { VendorJob } from '../types';
 import { useSecurity } from '../context/SecurityContext';
+import { VendorPerformanceView } from './VendorPerformanceView';
 
 export const VendorWorkbenchView: React.FC = () => {
   const { showSecurityNotification } = useSecurity();
+  const [workbenchSubView, setWorkbenchSubView] = useState<'workbench' | 'performance'>('workbench');
   const [jobs, setJobs] = useState<VendorJob[]>(VENDOR_JOBS_DATA);
   const [activeTab, setActiveTab] = useState<'jobs' | 'calendar' | 'messages' | 'profile'>('jobs');
   const [selectedJob, setSelectedJob] = useState<VendorJob>(VENDOR_JOBS_DATA[0]);
   const [partsReceiptAttached, setPartsReceiptAttached] = useState(false);
   const [hasAddedAfterPhoto, setHasAddedAfterPhoto] = useState(false);
   const [invoiceSubmitted, setInvoiceSubmitted] = useState(false);
+
+  // Vendor Profile State
+  const [vendorProfile, setVendorProfile] = useState({
+    company: 'AquaFix Plumbing',
+    contactName: 'David Miller',
+    phone: '+1 (555) 392-8810',
+    email: 'service@aquafixplumbing.com',
+    trade: 'Plumbing & Boilers',
+    payoutAccount: '•••• 4821 (Chase Commercial)',
+    payoutChannel: 'bank' as 'bank' | 'momo_mtn' | 'momo_orange',
+    momoNumber: '+237 677 41 89 20',
+  });
+  const [editVendorDraft, setEditVendorDraft] = useState({ ...vendorProfile });
+  const [isEditingVendorProfile, setIsEditingVendorProfile] = useState(false);
+
+  // Vendor App Settings
+  const [vendorPushAlerts, setVendorPushAlerts] = useState(true);
+  const [vendorLoudChime, setVendorLoudChime] = useState(true);
+  const [autoAcceptRoutine, setAutoAcceptRoutine] = useState(false);
+  const [gpsAutoCheckin, setGpsAutoCheckin] = useState(true);
+  const [vendorLanguage, setVendorLanguage] = useState<'en' | 'fr'>('en');
 
   const handleStepAdvance = (jobId: string) => {
     if (selectedJob.currentStep < 4) {
@@ -65,10 +98,52 @@ export const VendorWorkbenchView: React.FC = () => {
         </p>
       </div>
 
-      {/* Main Grid: Workbench Device Frame vs Transparent Payout Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left 5 Cols: Smartphone Screen Simulator */}
-        <div className="lg:col-span-5 flex justify-center">
+      {/* View Switcher: Mobile Workbench vs Vendor Performance */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-stone-200">
+        <div className="flex items-center space-x-1.5 bg-stone-100 p-1.5 rounded-2xl text-xs font-bold shadow-2xs">
+          <button
+            onClick={() => setWorkbenchSubView('workbench')}
+            className={`px-3.5 py-2 rounded-xl transition-all flex items-center space-x-2 ${
+              workbenchSubView === 'workbench'
+                ? 'bg-white text-stone-900 shadow-2xs'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            <HardHat className="w-3.5 h-3.5 text-amber-700" />
+            <span>Mobile Workbench & Dispatch</span>
+          </button>
+
+          <button
+            onClick={() => setWorkbenchSubView('performance')}
+            className={`px-3.5 py-2 rounded-xl transition-all flex items-center space-x-2 ${
+              workbenchSubView === 'performance'
+                ? 'bg-white text-stone-900 shadow-2xs'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5 text-emerald-700" />
+            <span>Vendor Performance (Recharts)</span>
+            <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-mono">
+              98.4% SLA
+            </span>
+          </button>
+        </div>
+
+        {workbenchSubView === 'workbench' && (
+          <div className="text-xs text-stone-500 font-mono flex items-center space-x-2">
+            <span>AquaFix Plumbing · ····4821</span>
+            <span className="text-emerald-700 font-bold">● Active Dispatch</span>
+          </div>
+        )}
+      </div>
+
+      {workbenchSubView === 'performance' ? (
+        <VendorPerformanceView onBackToWorkbench={() => setWorkbenchSubView('workbench')} />
+      ) : (
+        /* Main Grid: Equal Balanced View Sections on Both Sides (50% / 50%) */
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* Left Column (50% Equal Section): Smartphone Screen Simulator */}
+        <div className="flex justify-center">
           <div className="w-full max-w-[380px] bg-stone-900 rounded-[40px] p-3 shadow-2xl border-4 border-stone-800">
             <div className="bg-[#FAF9F6] rounded-[32px] overflow-hidden flex flex-col h-[660px] relative text-stone-900">
               {/* Status Bar */}
@@ -339,20 +414,257 @@ export const VendorWorkbenchView: React.FC = () => {
                   </div>
                 )}
 
-                {/* TAB 4: PROFILE */}
+                {/* TAB 4: PROFILE & SETTINGS */}
                 {activeTab === 'profile' && (
                   <div className="space-y-4">
-                    <div className="text-base font-extrabold text-stone-900">Vendor Profile</div>
-                    <div className="p-3 bg-white border border-stone-200 rounded-xl space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <strong>Company:</strong> AquaFix Plumbing
+                        <div className="text-base font-extrabold text-stone-900">Vendor Profile & Settings</div>
+                        <div className="text-[11px] text-stone-500 font-mono">{vendorProfile.trade}</div>
                       </div>
-                      <div>
-                        <strong>Payout account:</strong> ····4821 (Verified)
+                      {!isEditingVendorProfile && (
+                        <button
+                          onClick={() => {
+                            setEditVendorDraft({ ...vendorProfile });
+                            setIsEditingVendorProfile(true);
+                          }}
+                          className="px-2.5 py-1 bg-amber-50 border border-amber-300 text-amber-900 rounded-lg text-[11px] font-bold flex items-center space-x-1 hover:bg-amber-100 transition-colors"
+                        >
+                          <Edit2 className="w-3 h-3 text-amber-700" />
+                          <span>Edit</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {isEditingVendorProfile ? (
+                      <div className="p-3.5 bg-white border border-amber-400 rounded-2xl shadow-xs space-y-3 text-xs">
+                        <div className="flex items-center justify-between pb-2 border-b border-stone-100">
+                          <span className="font-bold text-stone-900 flex items-center space-x-1.5">
+                            <User className="w-3.5 h-3.5 text-amber-700" />
+                            <span>Edit Contractor Details</span>
+                          </span>
+                          <button
+                            onClick={() => setIsEditingVendorProfile(false)}
+                            className="text-stone-400 hover:text-stone-600"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div>
+                            <label className="block text-[10px] font-bold text-stone-500 uppercase">Company Name</label>
+                            <input
+                              type="text"
+                              value={editVendorDraft.company}
+                              onChange={(e) => setEditVendorDraft({ ...editVendorDraft, company: e.target.value })}
+                              className="w-full mt-0.5 px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg font-bold text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-stone-500 uppercase">Contact Representative</label>
+                            <input
+                              type="text"
+                              value={editVendorDraft.contactName}
+                              onChange={(e) => setEditVendorDraft({ ...editVendorDraft, contactName: e.target.value })}
+                              className="w-full mt-0.5 px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg font-medium text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-stone-500 uppercase">Phone (Dispatch Alerts)</label>
+                            <input
+                              type="text"
+                              value={editVendorDraft.phone}
+                              onChange={(e) => setEditVendorDraft({ ...editVendorDraft, phone: e.target.value })}
+                              className="w-full mt-0.5 px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-stone-500 uppercase">Email Address</label>
+                            <input
+                              type="email"
+                              value={editVendorDraft.email}
+                              onChange={(e) => setEditVendorDraft({ ...editVendorDraft, email: e.target.value })}
+                              className="w-full mt-0.5 px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-stone-500 uppercase">Preferred Payout Rail</label>
+                            <select
+                              value={editVendorDraft.payoutChannel}
+                              onChange={(e) => setEditVendorDraft({ ...editVendorDraft, payoutChannel: e.target.value as any })}
+                              className="w-full mt-0.5 px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg font-semibold text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            >
+                              <option value="bank">Commercial Bank Account (Wire/ACH)</option>
+                              <option value="momo_mtn">MTN Mobile Money (Cameroon MoMo)</option>
+                              <option value="momo_orange">Orange Money (Cameroon OM)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2 pt-2 border-t border-stone-100">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setVendorProfile({ ...editVendorDraft });
+                              setIsEditingVendorProfile(false);
+                              showSecurityNotification('Contractor profile updated: Contact & payout credentials saved.');
+                            }}
+                            className="flex-1 py-2 bg-amber-700 hover:bg-amber-800 text-white rounded-xl font-bold text-xs flex items-center justify-center space-x-1.5 shadow-2xs"
+                          >
+                            <Save className="w-3.5 h-3.5" />
+                            <span>Save Profile</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingVendorProfile(false)}
+                            className="px-3 py-2 bg-stone-100 text-stone-700 rounded-xl font-medium text-xs hover:bg-stone-200"
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       </div>
-                      <div>
-                        <strong>SLA Rating:</strong> 99.2% on-time arrival
+                    ) : (
+                      <div className="p-3.5 bg-white border border-stone-200 rounded-2xl space-y-2.5 text-xs shadow-2xs">
+                        <div className="flex items-center space-x-3 pb-2 border-b border-stone-100">
+                          <div className="w-10 h-10 rounded-xl bg-amber-700 text-white flex items-center justify-center font-bold text-sm shadow-2xs">
+                            {vendorProfile.company.charAt(0)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-bold text-stone-900 text-sm truncate">{vendorProfile.company}</div>
+                            <div className="text-[11px] text-stone-500 font-mono truncate">{vendorProfile.contactName} · {vendorProfile.email}</div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5 text-stone-700">
+                          <div className="flex items-center justify-between">
+                            <span className="text-stone-500">Phone:</span>
+                            <span className="font-mono font-bold text-stone-900">{vendorProfile.phone}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-stone-500">Payout Account:</span>
+                            <span className="font-mono text-emerald-800 font-bold">{vendorProfile.payoutAccount}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-stone-500">SLA Rating:</span>
+                            <span className="font-mono font-bold text-emerald-700">99.2% on-time arrival</span>
+                          </div>
+                        </div>
                       </div>
+                    )}
+
+                    {/* App Settings Card for Vendor Mobile */}
+                    <div className="p-3.5 bg-white border border-stone-200 rounded-2xl space-y-3 text-xs shadow-2xs">
+                      <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider flex items-center justify-between">
+                        <span>Vendor App Settings</span>
+                        <Settings className="w-3.5 h-3.5 text-stone-400" />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="font-medium text-stone-800">Dispatch Push Alerts</span>
+                          <div className="text-[10px] text-stone-500">Instant notification of new work orders</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVendorPushAlerts(!vendorPushAlerts);
+                            showSecurityNotification(`Dispatch alerts ${!vendorPushAlerts ? 'enabled' : 'muted'}.`);
+                          }}
+                          className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${
+                            vendorPushAlerts ? 'bg-amber-700' : 'bg-stone-300'
+                          }`}
+                        >
+                          <span
+                            className={`w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 transition-transform ${
+                              vendorPushAlerts ? 'right-0.5' : 'left-0.5'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-stone-100">
+                        <div>
+                          <span className="font-medium text-stone-800">Loud Emergency Chime</span>
+                          <div className="text-[10px] text-stone-500">High priority alert for Emergency SLAs</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVendorLoudChime(!vendorLoudChime);
+                            showSecurityNotification(`Emergency chime ${!vendorLoudChime ? 'enabled' : 'disabled'}.`);
+                          }}
+                          className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${
+                            vendorLoudChime ? 'bg-amber-700' : 'bg-stone-300'
+                          }`}
+                        >
+                          <span
+                            className={`w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 transition-transform ${
+                              vendorLoudChime ? 'right-0.5' : 'left-0.5'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-stone-100">
+                        <div>
+                          <span className="font-medium text-stone-800">GPS Auto-Checkin</span>
+                          <div className="text-[10px] text-stone-500">Logs SLA arrival upon reaching geofence</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setGpsAutoCheckin(!gpsAutoCheckin);
+                            showSecurityNotification(`GPS Auto-Checkin ${!gpsAutoCheckin ? 'activated' : 'manual'}.`);
+                          }}
+                          className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${
+                            gpsAutoCheckin ? 'bg-amber-700' : 'bg-stone-300'
+                          }`}
+                        >
+                          <span
+                            className={`w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 transition-transform ${
+                              gpsAutoCheckin ? 'right-0.5' : 'left-0.5'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-stone-100">
+                        <div>
+                          <span className="font-medium text-stone-800">Auto-Accept Routine Jobs</span>
+                          <div className="text-[10px] text-stone-500">Skip manual triage for routine requests</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAutoAcceptRoutine(!autoAcceptRoutine);
+                            showSecurityNotification(`Auto-accept routine jobs ${!autoAcceptRoutine ? 'enabled' : 'disabled'}.`);
+                          }}
+                          className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${
+                            autoAcceptRoutine ? 'bg-amber-700' : 'bg-stone-300'
+                          }`}
+                        >
+                          <span
+                            className={`w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 transition-transform ${
+                              autoAcceptRoutine ? 'right-0.5' : 'left-0.5'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="pt-1">
+                      <button
+                        onClick={() => setWorkbenchSubView('performance')}
+                        className="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl font-bold text-[11px] flex items-center justify-center space-x-1.5 transition-colors shadow-2xs"
+                      >
+                        <BarChart3 className="w-3.5 h-3.5 text-emerald-700" />
+                        <span>View Performance Analytics & Recharts</span>
+                      </button>
                     </div>
                   </div>
                 )}
@@ -393,8 +705,8 @@ export const VendorWorkbenchView: React.FC = () => {
           </div>
         </div>
 
-        {/* Right 7 Cols: Transparent Payout Summary & Reliability Guarantees */}
-        <div className="lg:col-span-7 space-y-6">
+        {/* Right Column (50% Equal Section): Transparent Payout Summary & Reliability Guarantees */}
+        <div className="space-y-6">
           {/* September Payout Summary Bar Chart */}
           <div className="bg-white border border-stone-200 rounded-2xl p-6 shadow-2xs space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100">
@@ -459,19 +771,79 @@ export const VendorWorkbenchView: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-xs">
-              <div className="p-2.5 bg-stone-50 rounded-lg border border-stone-100 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => {
+                  setVendorPushAlerts(!vendorPushAlerts);
+                  showSecurityNotification(`Push alerts ${!vendorPushAlerts ? 'enabled' : 'disabled'}.`);
+                }}
+                className="p-2.5 bg-stone-50 hover:bg-stone-100 rounded-lg border border-stone-100 flex items-center justify-between text-left transition-colors cursor-pointer"
+              >
                 <span>Push alerts for new jobs</span>
-                <span className="font-bold text-emerald-700">On</span>
-              </div>
-              <div className="p-2.5 bg-stone-50 rounded-lg border border-stone-100 flex items-center justify-between">
+                <span className={`font-bold ${vendorPushAlerts ? 'text-emerald-700' : 'text-stone-400'}`}>
+                  {vendorPushAlerts ? 'On' : 'Off'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAutoAcceptRoutine(!autoAcceptRoutine);
+                  showSecurityNotification(`Auto-accept routine ${!autoAcceptRoutine ? 'enabled' : 'disabled'}.`);
+                }}
+                className="p-2.5 bg-stone-50 hover:bg-stone-100 rounded-lg border border-stone-100 flex items-center justify-between text-left transition-colors cursor-pointer"
+              >
                 <span>Auto-accept routine</span>
-                <span className="font-bold text-stone-500">Off</span>
-              </div>
+                <span className={`font-bold ${autoAcceptRoutine ? 'text-emerald-700' : 'text-stone-400'}`}>
+                  {autoAcceptRoutine ? 'On' : 'Off'}
+                </span>
+              </button>
+
               <div className="p-2.5 bg-stone-50 rounded-lg border border-stone-100 flex items-center justify-between font-mono">
-                <span>Payout ····4821</span>
+                <span className="truncate max-w-[100px]">{vendorProfile.payoutAccount}</span>
                 <span className="font-bold text-emerald-700">Verified</span>
               </div>
             </div>
+          </div>
+
+          {/* Vendor Performance & SLA Metrics Card */}
+          <div className="bg-white border border-stone-200 rounded-2xl p-5 shadow-2xs space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-stone-100">
+              <div className="flex items-center space-x-2">
+                <BarChart3 className="w-4 h-4 text-emerald-700" />
+                <h3 className="text-xs font-bold text-stone-900">Live SLA & Response Rate Performance</h3>
+              </div>
+              <span className="text-[10px] font-mono font-bold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded">
+                Tier 1 Preferred
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 text-xs font-mono">
+              <div className="p-2.5 bg-stone-50 rounded-xl">
+                <div className="text-[10px] font-sans text-stone-500">Avg Response</div>
+                <div className="text-sm font-extrabold text-stone-900">17 mins</div>
+                <div className="text-[10px] text-emerald-700 font-sans font-semibold">−13m vs SLA</div>
+              </div>
+              <div className="p-2.5 bg-stone-50 rounded-xl">
+                <div className="text-[10px] font-sans text-stone-500">Resolution Rate</div>
+                <div className="text-sm font-extrabold text-emerald-800">98.4%</div>
+                <div className="text-[10px] text-emerald-700 font-sans font-semibold">&gt; 95% target</div>
+              </div>
+              <div className="p-2.5 bg-stone-50 rounded-xl">
+                <div className="text-[10px] font-sans text-stone-500">First-Time Fix</div>
+                <div className="text-sm font-extrabold text-stone-900">94.6%</div>
+                <div className="text-[10px] text-stone-500 font-sans">0 recalls</div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setWorkbenchSubView('performance')}
+              className="w-full py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center space-x-2 shadow-2xs cursor-pointer"
+            >
+              <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
+              <span>Open Detailed Vendor Performance & Recharts Analytics</span>
+              <ArrowRight className="w-3.5 h-3.5 text-stone-400" />
+            </button>
           </div>
 
           {/* How the Vendor Flow Stays Reliable (Page 7 list) */}
@@ -503,6 +875,7 @@ export const VendorWorkbenchView: React.FC = () => {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 };

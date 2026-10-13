@@ -79,7 +79,7 @@ export const Navigation: React.FC<NavigationProps> = ({
       pageNumber: 5,
       id: 'finance',
       label: 'Payments & Finance',
-      subLabel: 'Reconciliation',
+      subLabel: 'Fintech & Reconciliation',
       icon: CreditCard,
       badge: unresolvedFinanceCount,
     },

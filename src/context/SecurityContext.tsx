@@ -9,6 +9,8 @@ import {
   MfaChallenge,
   MfaPaymentDetails,
   LoginSessionState,
+  AppSettings,
+  DEFAULT_APP_SETTINGS,
 } from '../types';
 import { INITIAL_USERS, SECURITY_CONTROLS_DATA } from '../data/estateData';
 
@@ -73,6 +75,12 @@ interface SecurityContextType {
   unlockSession: () => void;
   isSessionLocked: boolean;
   clearSimulatedCode: () => void;
+
+  // Profile & App Settings Management
+  users: UserProfile[];
+  updateUserProfile: (userId: string, updates: Partial<UserProfile>) => void;
+  appSettings: AppSettings;
+  updateAppSettings: (updates: Partial<AppSettings>) => void;
 }
 
 const INITIAL_API_AUDIT_LOGS: ApiAuditLogEntry[] = [
@@ -185,7 +193,68 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [mfaSuccessCallback, setMfaSuccessCallback] = useState<((challenge: MfaChallenge) => void) | null>(null);
   const [mfaSimulatedIncomingCode, setMfaSimulatedIncomingCode] = useState<string | null>(null);
 
-  const currentUser = INITIAL_USERS.find((u) => u.role === activeRole) || INITIAL_USERS[0];
+  const [users, setUsers] = useState<UserProfile[]>(() => {
+    try {
+      const saved = localStorage.getItem('estateflow_user_profiles');
+      return saved ? JSON.parse(saved) : INITIAL_USERS;
+    } catch {
+      return INITIAL_USERS;
+    }
+  });
+
+  const [appSettings, setAppSettings] = useState<AppSettings>(() => {
+    try {
+      const saved = localStorage.getItem('estateflow_app_settings');
+      return saved ? JSON.parse(saved) : DEFAULT_APP_SETTINGS;
+    } catch {
+      return DEFAULT_APP_SETTINGS;
+    }
+  });
+
+  const currentUser = users.find((u) => u.role === activeRole) || users[0];
+
+  const updateUserProfile = (userId: string, updates: Partial<UserProfile>) => {
+    setUsers((prevUsers) => {
+      const updated = prevUsers.map((u) => {
+        if (u.id === userId) {
+          return { ...u, ...updates };
+        }
+        return u;
+      });
+      try {
+        localStorage.setItem('estateflow_user_profiles', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to persist user profile:', e);
+      }
+      return updated;
+    });
+
+    logApiAction(
+      'PROFILE_UPDATED',
+      'Identity & Profile Service',
+      `Profile updated for user ${userId}. Attributes changed: ${Object.keys(updates).join(', ')}.`
+    );
+    showSecurityNotification('Profile updated successfully.');
+  };
+
+  const updateAppSettings = (updates: Partial<AppSettings>) => {
+    setAppSettings((prev) => {
+      const updated = { ...prev, ...updates };
+      try {
+        localStorage.setItem('estateflow_app_settings', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to persist app settings:', e);
+      }
+      return updated;
+    });
+
+    logApiAction(
+      'SETTINGS_UPDATED',
+      'Application Configuration Engine',
+      `App settings updated: ${Object.keys(updates).join(', ')}.`
+    );
+    showSecurityNotification('App settings saved and applied.');
+  };
 
   const isLoginMfaEnforced = securityControls.find((c) => c.id === 'sec-mfa-login')?.active ?? true;
   const isPaymentMfaEnforced = securityControls.find((c) => c.id === 'sec-mfa-payment')?.active ?? true;
@@ -587,6 +656,8 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({ children }
         return activeRole === 'super_admin' || activeRole === 'owner';
       case 'properties.create':
         return activeRole === 'super_admin' || activeRole === 'owner' || activeRole === 'property_manager';
+      case 'properties.approve':
+        return activeRole === 'super_admin' || activeRole === 'owner';
       default:
         return activeRole !== 'read_only';
     }
@@ -666,6 +737,12 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({ children }
         unlockSession,
         isSessionLocked: loginSession.isLocked,
         clearSimulatedCode,
+
+        // Profile & App Settings
+        users,
+        updateUserProfile,
+        appSettings,
+        updateAppSettings,
       }}
     >
       {children}

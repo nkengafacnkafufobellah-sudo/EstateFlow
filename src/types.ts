@@ -58,9 +58,40 @@ export interface UserProfile {
   roleScope: string;
   mfa: 'Enforced' | 'Pending' | 'Disabled';
   mfaPreferredChannel?: MfaChannel;
+  emergencyContact?: string;
   lastActive: string;
   avatarColor: string;
 }
+
+export interface AppSettings {
+  theme: 'system' | 'light' | 'dark';
+  defaultCurrency: SupportedCurrency;
+  language: 'en' | 'fr';
+  dateFormat: 'YYYY-MM-DD' | 'DD/MM/YYYY' | 'MM/DD/YYYY';
+  timeZone: string;
+  autoLockMinutes: number; // 0 for never, 5, 15, 30, 60
+  emailAlerts: boolean;
+  smsAlerts: boolean;
+  pushAlerts: boolean;
+  soundEnabled: boolean;
+  biometricsEnabled: boolean;
+  rentReminderLeadDays: number;
+}
+
+export const DEFAULT_APP_SETTINGS: AppSettings = {
+  theme: 'system',
+  defaultCurrency: 'USD',
+  language: 'en',
+  dateFormat: 'YYYY-MM-DD',
+  timeZone: 'Africa/Douala (UTC+1)',
+  autoLockMinutes: 15,
+  emailAlerts: true,
+  smsAlerts: true,
+  pushAlerts: true,
+  soundEnabled: true,
+  biometricsEnabled: true,
+  rentReminderLeadDays: 3,
+};
 
 export interface RevenueMetricPoint {
   month: string;
@@ -95,6 +126,28 @@ export interface SystemNotification {
   unread: boolean;
 }
 
+export interface PropertyAssetVerification {
+  userId: string;
+  userName: string;
+  userRole: string;
+  timestamp: string;
+  idCardNumber: string;
+  idCardType: 'National ID Card' | 'Passport' | 'Driver License';
+  idCardDocumentName: string;
+  titleDeedDocName: string;
+  notarySealReference?: string;
+  proofOfOwnershipDocName?: string;
+  verificationNote?: string;
+}
+
+export interface PropertyApprovalDetails {
+  approvedBy?: string;
+  approvedByRole?: 'super_admin' | 'owner';
+  approvedAt?: string;
+  approvalNote?: string;
+  certificateHash?: string;
+}
+
 export interface PropertyRecord {
   id: string;
   code: string;
@@ -111,6 +164,15 @@ export interface PropertyRecord {
   openWorkOrders: number;
   unitsInTurnover: number;
   nextLeaseStart: string;
+  imageUrl?: string;
+  galleryImages?: string[];
+  cadastralNumber?: string;
+  valuationAmount?: number;
+  amenities?: string[];
+  yearBuilt?: number;
+  verificationStatus?: 'APPROVED' | 'PENDING_APPROVAL' | 'REJECTED';
+  submittedBy?: PropertyAssetVerification;
+  approvalDetails?: PropertyApprovalDetails;
   documents: {
     name: string;
     size: string;
@@ -121,6 +183,97 @@ export interface PropertyRecord {
     inProgress: string;
     awaitingApproval: string;
   };
+}
+
+export interface FintechWalletAccount {
+  id: string;
+  name: string;
+  type: 'OPERATING' | 'ESCROW_TRUST' | 'CLEARING' | 'PAYOUT_RESERVE';
+  currency: SupportedCurrency;
+  balance: number;
+  availableBalance: number;
+  accountNumberMasked: string;
+  institutionName: string;
+  yieldApy?: number;
+  interestAccruedYtd?: number;
+  status: 'ACTIVE' | 'RESTRICTED' | 'AUDIT_HOLD';
+  lastSettledAt: string;
+}
+
+export interface EscrowAccountRecord {
+  id: string;
+  tenantName: string;
+  property: string;
+  unit: string;
+  depositAmount: number;
+  currency: SupportedCurrency;
+  heldSince: string;
+  accruedInterest: number;
+  status: 'HELD_IN_TRUST' | 'REFUNDED' | 'DEDUCTION_CLAIMED';
+  bankEscrowRef: string;
+  disputeProtection: boolean;
+}
+
+export interface SplitPaymentRule {
+  id: string;
+  unit: string;
+  property: string;
+  totalRentUSD: number;
+  contributors: {
+    name: string;
+    email: string;
+    percentage: number;
+    amountUSD: number;
+    paymentRail: 'mtn_momo' | 'orange_money' | 'card' | 'ach';
+    status: 'PAID' | 'PENDING' | 'OVERDUE';
+  }[];
+  coSignerBackupEnabled: boolean;
+  coSignerName?: string;
+  coSignerContact?: string;
+}
+
+export interface VirtualCardRecord {
+  id: string;
+  cardHolderName: string;
+  role: string;
+  brand: 'Mastercard' | 'Visa';
+  lastFour: string;
+  expMonth: string;
+  expYear: string;
+  cvvMasked: string;
+  monthlyLimitUSD: number;
+  spentCurrentMonthUSD: number;
+  status: 'ACTIVE' | 'FROZEN' | 'CANCELLED';
+  allowedCategories: string[];
+  purpose: string;
+  createdAt: string;
+}
+
+export interface RnplAdvanceRecord {
+  id: string;
+  tenantName: string;
+  property: string;
+  unit: string;
+  advanceAmountUSD: number;
+  approvedDate: string;
+  dueDate: string;
+  status: 'ACTIVE' | 'SETTLED' | 'IN_REVIEW';
+  creditScoreBoost: string;
+  aprPercent: number;
+  repaymentMethod: string;
+}
+
+export interface EscrowDisputeRecord {
+  id: string;
+  escrowId: string;
+  tenantName: string;
+  property: string;
+  unit: string;
+  claimedDeductionUSD: number;
+  reason: string;
+  evidenceDocs: string[];
+  status: 'OPEN_DISPUTE' | 'ARBITRATED' | 'RESOLVED';
+  filedDate: string;
 }
 
 export interface TenantDocument {
@@ -446,6 +599,43 @@ export interface VendorJob {
   partsReceiptAttached: boolean;
   invoiceSubmitted: boolean;
   platformFeeRate: number;
+}
+
+export interface VendorPerformanceTrend {
+  period: string; // e.g. 'May', 'Jun', 'Jul', 'Aug', 'Sep'
+  avgResponseMinutes: number;
+  targetResponseMinutes: number;
+  resolutionRate: number; // percentage, e.g. 96.8
+  targetResolutionRate: number; // percentage, e.g. 95.0
+  firstTimeFixRate: number; // percentage, e.g. 91.5
+  totalJobs: number;
+  resolvedOnTime: number;
+  slaBreached: number;
+}
+
+export interface VendorCategorySla {
+  category: string;
+  avgResponseMinutes: number;
+  targetResponseMinutes: number;
+  resolutionRate: number;
+  avgResolutionHours: number;
+  completedCount: number;
+  satisfactionRating: number;
+}
+
+export interface VendorScorecard {
+  vendorId: string;
+  vendorName: string;
+  trade: string;
+  contactPerson: string;
+  phone: string;
+  rating: number;
+  activeJobsCount: number;
+  completedJobsYtd: number;
+  avgResponseMinutes: number;
+  resolutionRate: number;
+  firstTimeFixRate: number;
+  slaComplianceBadge: 'Tier 1 Preferred' | 'Tier 2 Approved' | 'SLA Warning';
 }
 
 export interface AuditLogItem {

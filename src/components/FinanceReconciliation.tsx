@@ -41,6 +41,7 @@ import { FinanceCsvExportModal } from './FinanceCsvExportModal';
 import { MobileMoneyPaymentModal } from './MobileMoneyPaymentModal';
 import { MesombPluginManagerModal } from './MesombPluginManagerModal';
 import { RecurringPaymentHistory } from './RecurringPaymentHistory';
+import { FintechHubPanel } from './FintechHubPanel';
 import { INITIAL_RECURRING_PAYMENTS } from '../data/recurringPaymentsData';
 import { generateReconciliationCsv, downloadCsvFile } from '../utils/financeCsvExporter';
 
@@ -59,7 +60,7 @@ export const FinanceReconciliation: React.FC = () => {
     getReceiptForTransaction,
   } = useReceipts();
 
-  const [activeFinanceTab, setActiveFinanceTab] = useState<'ledger' | 'recurring-history' | 'receipts-archive' | 'gateways'>('ledger');
+  const [activeFinanceTab, setActiveFinanceTab] = useState<'fintech' | 'ledger' | 'recurring-history' | 'receipts-archive' | 'gateways'>('fintech');
   const [currencyFilter, setCurrencyFilter] = useState<'ALL' | SupportedCurrency>('ALL');
   const [selectedTxnId, setSelectedTxnId] = useState<string>(transactions[0]?.id || 'txn-1');
   const [receiptSearch, setReceiptSearch] = useState('');
@@ -173,10 +174,25 @@ export const FinanceReconciliation: React.FC = () => {
 
         {/* Workspace Sub-Tabs & Export Action */}
         <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
-          <div className="flex items-center space-x-1 bg-stone-100 p-1.5 rounded-xl text-xs font-bold shadow-2xs">
+          <div className="flex items-center space-x-1 bg-stone-100 p-1.5 rounded-xl text-xs font-bold shadow-2xs overflow-x-auto">
+            <button
+              onClick={() => setActiveFinanceTab('fintech')}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                activeFinanceTab === 'fintech'
+                  ? 'bg-amber-700 text-white shadow-xs'
+                  : 'text-stone-700 hover:text-stone-900 hover:bg-stone-200/60'
+              }`}
+            >
+              <Coins className={`w-4 h-4 ${activeFinanceTab === 'fintech' ? 'text-amber-200' : 'text-amber-700'}`} />
+              <span>Fintech Hub & Treasury</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${activeFinanceTab === 'fintech' ? 'bg-amber-800 text-amber-100' : 'bg-amber-100 text-amber-900'}`}>
+                5 Rails
+              </span>
+            </button>
+
             <button
               onClick={() => setActiveFinanceTab('ledger')}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                 activeFinanceTab === 'ledger'
                   ? 'bg-white text-stone-900 shadow-xs'
                   : 'text-stone-600 hover:text-stone-900'
@@ -345,8 +361,16 @@ export const FinanceReconciliation: React.FC = () => {
         </div>
       </div>
 
-      {/* Render Gateways Manager Tab if selected */}
-      {activeFinanceTab === 'gateways' ? (
+      {/* Render Fintech Hub Tab if selected */}
+      {activeFinanceTab === 'fintech' ? (
+        <FintechHubPanel
+          onOpenMobileMoneyModal={() => {
+            setMobileMoneyInitialGateway('mtn_momo');
+            setIsMobileMoneyModalOpen(true);
+          }}
+          onOpenMesombPluginModal={() => setIsMesombPluginOpen(true)}
+        />
+      ) : activeFinanceTab === 'gateways' ? (
         <PaymentGatewaysManager />
       ) : activeFinanceTab === 'recurring-history' ? (
         <RecurringPaymentHistory

@@ -80,26 +80,71 @@ Located under the **Security Audit** workspace (`SecurityAuditPanel.tsx`), the *
 - **Export & Audit Reporting**:
   - Generates comprehensive PDF Security Audit Reports (`auditReportGenerator.ts`) containing executive summaries, policy posture, and incident logs.
 
-### 3. Financial Reconciliation & Recurring Payment History
+### 3. Financial Reconciliation, Recurring Autopay & Fintech Hub
 
-The **Finance & Reconciliation** module (`FinanceReconciliation.tsx`) serves as the core financial ledger:
+The **Payments & Finance** module (`FinanceReconciliation.tsx` & `FintechHubPanel.tsx`) serves as the comprehensive enterprise financial operating system:
 
-- **Live Rent Ledger**: Real-time status of all active leases, amounts due, settled payments, overdue arrears, and collection channels.
-- **Recurring Payment History (`RecurringPaymentHistory.tsx`)**:
-  - Track automated monthly rent and service fee autopay collections.
-  - Inspect recurring mandates with frequencies (Monthly, Quarterly, Bi-Weekly).
-  - Audit trail of automated collection attempts, gateway references, and transaction IDs.
-  - Re-attempt failed automated collections or pause/cancel active recurring mandates.
-  - Direct integration into verified receipt generation.
-  - New mandate enrollment modal for tenants and units.
-  - Dedicated CSV export of recurring autopay logs.
-- **Reconciliation KPI Ribbon**:
-  - Settled & Reconciled total sums.
-  - Pending Webhook & Gateway verification counts.
-  - Automated PDF receipts issued.
-  - Active Recurring Autopay mandates with instant sub-tab navigation.
+- **Fintech Operations & Treasury Hub (`FintechHubPanel.tsx`)**:
+  - **Multi-Currency Treasury Wallets**:
+    - Real-time balances across USD Operating Treasury, Central Africa Afriland/MeSomb Clearing Pool (114.25M CFA), Statutory Escrow Vault, European EUR Reserve, and Vendor Payout Reserves.
+    - Inter-wallet instant fund transfers with zero internal fees and cryptographic audit logging.
+  - **Statutory Security Deposit Escrow Trust**:
+    - Segregated, non-commingled trust accounts yielding 2.85% APY interest.
+    - Statutory damage deduction claim filing with itemized repair invoices and damage photo documentation.
+    - One-click escrow refund release with accrued interest calculations.
+  - **Virtual Corporate Expense Cards & MCC Controls**:
+    - Instant issuance of virtual Mastercard and Visa cards for property managers and key contractors (e.g. AquaFix, VoltCraft).
+    - Category locking (Merchant Category Code restrictions: Hardware, plumbing supplies, HVAC parts only).
+    - Monthly spending limits and live utilization meters.
+    - One-click instant card freeze / unfreeze.
+    - Masked PAN and CVV security with Step-Up MFA authorization required to reveal numbers.
+  - **Rent-Now-Pay-Later (RNPL) Micro-Advance Facility**:
+    - Zero-interest (0% APR) 14-day emergency bridge advances for verified tenants.
+    - Synchronized with tenant payroll or Mobile Money collection cycles.
+    - Automatic credit bureau positive reporting (+12 to +19 pts Experian / Equifax).
+  - **Split Rent Payments & Co-Signer Protection**:
+    - Roommate proportional rent split allocations across diverse payment rails (Card, ACH, MTN MoMo, Orange Money).
+    - Automated secondary co-signer guarantee trigger if roommate share lapses past the grace window.
+  - **Cross-Border Interbank FX Conversion Desk**:
+    - Live currency swap quote calculation between USD, EUR, GBP, and CFA Franc.
+    - Zero-spread interbank transfer simulator with instant clearing.
+  - **Fintech Governance, Risk Rules & Settings**:
+    - Configurable automated payout schedules (Instant, Daily at 18:00 UTC, Weekly Net 7).
+    - PSD2 Step-Up MFA threshold slider (enforces OTP verification for transactions over $1,000 / 500k CFA).
+    - Platform processing take-rate percentage slider (0% to 5%).
+    - Payment rail routing priorities (Smart Fallback, MeSomb Priority, Stripe Global).
+    - Real-time Anti-Money Laundering (AML) velocity fraud shields and disbursement dual-approval policies.
 
-### 4. Payment Gateways & MeSomb Mobile Money
+- **Live Rent Ledger & Autopay History**:
+  - Real-time status of all active leases, amounts due, settled payments, overdue arrears, and collection channels.
+  - **Recurring Payment History (`RecurringPaymentHistory.tsx`)**: Auto-debit mandates, payment frequencies (Monthly, Quarterly, Bi-Weekly), and failure retry queues.
+  - **Reconciliation KPI Ribbon**: Settled & Reconciled total sums, pending webhook counts, and automated PDF receipts issued.
+
+### 4. Properties & Units Manager — Pictures, Submitter Verification & Privileged Approval
+
+The **Properties & Units** workspace (`PropertiesManager.tsx`) provides end-to-end asset lifecycle governance:
+
+- **Architectural Imagery & Picture Presets**:
+  - High-resolution architectural photography presets (Palais de Bonanjo Luxury Residence, Executive Townhouse Estate, Oak Modern Residence, Suburban Palm Villa, Metropolitan Commercial Tower).
+  - Custom image URL support and live preview thumbnail rendered during property creation.
+- **Comprehensive Asset Metadata**:
+  - Cadastral Parcel ID (e.g., `CAD-LT-DLA-5102-X`).
+  - Estimated Asset Valuation in USD/CFA.
+  - Year Built, total unit count, and occupancy tracking.
+  - Infrastructure & Amenities checklist (24/7 Security CCTV, Solar Generator Backup, High-Speed Fiber, Smart Locks, Underground Parking, EV Charging).
+- **Submitter Identity & Legal Asset Verification**:
+  - Mandatory submitter ID credentials (National ID Card, International Passport, or Driver License) with document number.
+  - Document attachments for Submitter ID Scan (`.pdf`) and Cadastral Title Deed / Land Certificate (`.pdf`).
+  - Notary seal reference and municipal registry audit reference.
+  - Legal attestation declaration affirming physical on-site survey and unencumbered title authenticity.
+- **Privileged Approval Workflow (Super Admin & Owner Exclusive)**:
+  - **Least-Privilege RBAC Boundary**: Newly added properties by property managers enter a `PENDING_APPROVAL` queue.
+  - **Super Admin & Portfolio Owner Privilege**: Only users holding the `super_admin` or `owner` role hold the authority to inspect credentials and grant final legal approval.
+  - **Document Inspection Modal**: Review submitter ID card scan, title deed documents, and cadastral references.
+  - **Cryptographic Seal Generation**: Approved assets receive a digital compliance hash (`#CERT-AUTH-...`), status changes to `Healthy`, and operations unlock.
+  - **Non-Privileged Guard**: Other roles (property managers, accountants, agents) see an informative lock banner indicating that only Super Admin or Portfolio Owner accounts can approve newly submitted properties.
+
+### 5. Payment Gateways & MeSomb Mobile Money
 
 Integrated payment rail orchestration (`PaymentGatewaysManager.tsx` & `MesombPluginManagerModal.tsx`):
 
@@ -113,7 +158,7 @@ Integrated payment rail orchestration (`PaymentGatewaysManager.tsx` & `MesombPlu
   - Secret key, application key, and service pin management restricted to administrators.
   - Webhook URL simulation and live test transactions.
 
-### 5. Automated PDF Receipts & Archival
+### 6. Automated PDF Receipts & Archival
 
 - **Automated Generation (`pdfReceiptGenerator.ts`)**:
   - Generates official, tamper-evident payment receipts via `jspdf`.
@@ -122,7 +167,7 @@ Integrated payment rail orchestration (`PaymentGatewaysManager.tsx` & `MesombPlu
   - In-app preview modal (`ReceiptPreviewModal.tsx`) with PDF download and email dispatch simulation.
   - Verified receipt lookup linking both ledger items and recurring history entries.
 
-### 6. Maintenance Workflow & Vendor Workbench
+### 7. Maintenance Workflow & Vendor Workbench
 
 - **Maintenance Workflow (`MaintenanceWorkflow.tsx`)**:
   - Kanban and list views of incoming maintenance requests.
@@ -130,11 +175,17 @@ Integrated payment rail orchestration (`PaymentGatewaysManager.tsx` & `MesombPlu
   - Priority SLA badges (Emergency, High, Medium, Low) and cost tracking.
 - **Maintenance Calendar (`MaintenanceCalendar.tsx`)**:
   - Timeline view of scheduled maintenance visits, inspections, and contractor visits.
-- **Vendor Workbench (`VendorWorkbenchView.tsx`)**:
-  - Specialized view for external service providers.
-  - Accept/decline work orders, log hours, input material expenses, and mark jobs completed.
+- **Vendor Workbench & Performance (`VendorWorkbenchView.tsx` & `VendorPerformanceView.tsx`)**:
+  - Specialized view for external service providers with a smartphone dispatch simulator and live payout summaries.
+  - Guided 4-step job progression (Accepted, On Site via GPS check-in, In Progress, Evidence & Complete).
+  - Mandatory photo proof and receipt attachments blocking invoice submissions until satisfied.
+  - **Vendor Performance Analytics View (Recharts)**:
+    - **Response Time Latency Visualization**: `AreaChart` and `LineChart` tracking initial acknowledgment latency against contractual 30-minute SLA limits and emergency <15m thresholds.
+    - **Resolution Rate & Volume Distribution**: `ComposedChart` and `BarChart` tracking percentage of work orders resolved within contractual SLA windows (98.4%) against the 95% Gold SLA threshold, plus first-time fix rates (94.6%).
+    - **Trade Category Benchmarking**: Multi-trade comparative diagnostics across Plumbing, HVAC, Electrical, Locksmith, and Appliances.
+    - **Vendor Directory Scorecards**: Performance badges, SLA compliance tiers, active/closed counts, and tenant satisfaction ratings (4.92/5.0).
 
-### 7. Tenant Mobile Portal
+### 8. Tenant Mobile Portal
 
 Responsive, mobile-optimized experience for residents (`TenantMobileView.tsx`):
 
@@ -142,12 +193,27 @@ Responsive, mobile-optimized experience for residents (`TenantMobileView.tsx`):
 - Submit maintenance work orders with photo attachment simulation.
 - Quick "Pay Rent" action with built-in Step-Up MFA (email/SMS code verification).
 - Access receipt archive and lease agreement documents.
+- **Mobile Profile & Settings Tab**:
+  - Edit tenant full name, email, mobile phone number (for SMS MFA & MoMo receipts), and emergency escalation contact.
+  - Configure mobile app settings: display currency (USD, EUR, GBP, XAF), app language (EN/FR), rent reminder notifications (1, 3, 5, 7 days before due date), SMS alerts, Biometric/Face ID unlock, and audible payment confirmation chimes.
 
-### 8. Role-Based Access Control (RBAC) & Governance
+### 9. Role-Based Access Control (RBAC) & Governance
 
 - Role switcher in the top navigation header for testing and role simulation.
 - Contextual workspace navigation: buttons and actions automatically adapt or hide according to active permissions.
 - Centralized security rules and policies managed in `SecurityContext.tsx`.
+
+### 9. Profile Editing & Application Settings Across Both Platforms
+
+EstateFlow provides unified profile management and system preference configuration across both desktop and mobile environments:
+
+- **Desktop Platform (`ProfileSettingsModal.tsx` & `Header.tsx`)**:
+  - Accessible via the top navigation header and user persona dropdown.
+  - **My Profile Tab**: Edit full name, email address, SMS MFA phone number, role title, emergency contact, avatar color themes, and preferred MFA delivery channel (Phone SMS vs Email OTP).
+  - **App Settings Tab**: Configure platform display currency (USD, EUR, GBP, XAF), system language (English / Français), ISO/regional date formats, timezone anchors, zero-trust inactivity auto-lock timers (5m, 15m, 30m, 60m), biometric unlock simulation, and alert notification channels (email, SMS, sound chimes).
+- **Mobile Platform (`TenantMobileView.tsx` & `VendorWorkbenchView.tsx`)**:
+  - **Tenant Mobile Portal**: Dedicated Profile & Settings tab with in-place profile editor, multi-currency rent converter, language toggle, rent reminder lead-time selectors, and Face ID security toggle.
+  - **Vendor Mobile Workbench**: Dedicated Contractor Profile editor updating company name, lead technician, dispatch contact phone, payout channel (Bank Wire vs MTN MoMo vs Orange Money), dispatch push alerts, loud emergency SLA chime, and GPS auto check-in.
 
 ---
 
@@ -190,7 +256,7 @@ Responsive, mobile-optimized experience for residents (`TenantMobileView.tsx`):
         └──────────────────────────────────────────────┘
 ```
 
-- **Frontend Core**: React 19, TypeScript, Vite 8
+- **Frontend Core**: React 19, TypeScript, Vite 8, Recharts
 - **Styling**: Tailwind CSS v4, Lucide React Icons
 - **Animation**: Motion (`motion/react`)
 - **Document Generation**: jsPDF
@@ -230,6 +296,7 @@ Responsive, mobile-optimized experience for residents (`TenantMobileView.tsx`):
     │   ├── MobileMoneyPaymentModal.tsx    # USSD payment terminal & MFA step-up execution
     │   ├── Navigation.tsx                 # Primary sidebar navigation
     │   ├── PaymentGatewaysManager.tsx     # Payment rail configuration & credentials
+    │   ├── ProfileSettingsModal.tsx       # User profile editing & application preferences modal
     │   ├── PropertiesManager.tsx          # Property portfolio & unit inventory
     │   ├── ReceiptPreviewModal.tsx        # Interactive PDF receipt preview & downloader
     │   ├── RecurringPaymentHistory.tsx    # Recurring autopay mandates & collection history
@@ -238,11 +305,13 @@ Responsive, mobile-optimized experience for residents (`TenantMobileView.tsx`):
     │   ├── SuperAdminDashboard.tsx        # Master tenant & platform governance view
     │   ├── TenantMobileView.tsx           # Resident mobile portal with rent payment
     │   ├── TenantsManager.tsx             # Tenant lease roster & communication tools
-    │   └── VendorWorkbenchView.tsx        # Contractor ticket workflow & billing logs
+    │   ├── VendorPerformanceView.tsx      # Recharts visualizations of response & resolution rates
+    │   └── VendorWorkbenchView.tsx        # Contractor ticket workflow, dispatch & billing logs
     ├── data/
     │   ├── accessLogsData.ts              # Initial system access events & geo samples
     │   ├── estateData.ts                  # Seed properties, tenants, users, work orders
-    │   └── recurringPaymentsData.ts       # Autopay mandates & historical collection runs
+    │   ├── recurringPaymentsData.ts       # Autopay mandates & historical collection runs
+    │   └── vendorPerformanceData.ts       # Vendor SLAs, latency trends & trade benchmarks
     └── utils/
         ├── auditReportGenerator.ts        # jsPDF compliance security report export
         ├── dateFilterUtils.ts             # Date comparison and filtering helpers

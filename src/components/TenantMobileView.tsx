@@ -20,6 +20,13 @@ import {
   Eye,
   FileCheck,
   Printer,
+  Edit2,
+  Settings,
+  Mail,
+  Phone,
+  Save,
+  Globe,
+  X,
 } from 'lucide-react';
 import { useSecurity } from '../context/SecurityContext';
 import { useCurrency } from '../context/CurrencyContext';
@@ -72,9 +79,27 @@ export const TenantMobileView: React.FC = () => {
     { id: 'MR-0987', title: 'Door lock', status: 'Completed' },
   ]);
 
-  // Profile toggles
+  // Profile & App Settings state for mobile tenant
+  const [tenantProfile, setTenantProfile] = useState({
+    name: 'Jordan Avery',
+    email: 'jordan.avery@mail.com',
+    phone: '+237 670 12 34 56',
+    unit: 'Unit 4B',
+    property: 'Oak Residence',
+    emergencyContact: '+237 699 88 77 66 (Eric Avery - Brother)',
+    preferredMfa: 'phone' as 'phone' | 'email',
+  });
+
+  const [editProfileDraft, setEditProfileDraft] = useState({ ...tenantProfile });
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+
+  // Tenant App Settings
   const [pushEnabled, setPushEnabled] = useState(true);
+  const [smsAlerts, setSmsAlerts] = useState(true);
   const [faceIdEnabled, setFaceIdEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [rentReminderDays, setRentReminderDays] = useState(3);
+  const [appLanguage, setAppLanguage] = useState<'en' | 'fr'>('en');
   const [rentPaid, setRentPaid] = useState(false);
 
   const baseRentUSD = 1450.0;
@@ -222,8 +247,10 @@ export const TenantMobileView: React.FC = () => {
         </div>
       </div>
 
-      {/* Centered Mobile Device Frame (Touch-First Prototype) */}
-      <div className="flex justify-center py-4">
+      {/* Main Dual-Sided Layout: Equal Balanced View Sections on Both Sides (50% / 50%) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start py-4">
+        {/* Left Column (50% Equal Section): Touch-First Smartphone Simulator */}
+        <div className="flex justify-center">
         <div className="w-full max-w-[380px] bg-stone-900 rounded-[40px] p-3 shadow-2xl border-4 border-stone-800">
           {/* Inner Phone Screen */}
           <div className="bg-[#FAF9F6] rounded-[32px] overflow-hidden flex flex-col h-[650px] relative text-stone-900">
@@ -826,31 +853,249 @@ export const TenantMobileView: React.FC = () => {
               {/* TAB 5: PROFILE & SETTINGS */}
               {activeTab === 'profile' && (
                 <div className="space-y-4">
-                  <div>
-                    <div className="text-base font-extrabold text-stone-900">Profile & settings</div>
-                    <div className="text-xs text-stone-500 font-mono">Jordan Avery · jordan.avery@mail.com</div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-base font-extrabold text-stone-900">Profile & Settings</div>
+                      <div className="text-[11px] text-stone-500 font-mono">
+                        {tenantProfile.unit} · {tenantProfile.property}
+                      </div>
+                    </div>
+                    {!isEditingProfile && (
+                      <button
+                        onClick={() => {
+                          setEditProfileDraft({ ...tenantProfile });
+                          setIsEditingProfile(true);
+                        }}
+                        className="px-2.5 py-1 bg-amber-50 border border-amber-300 text-amber-900 rounded-lg text-[11px] font-bold flex items-center space-x-1 hover:bg-amber-100 transition-colors"
+                      >
+                        <Edit2 className="w-3 h-3 text-amber-700" />
+                        <span>Edit</span>
+                      </button>
+                    )}
                   </div>
 
-                  <div className="p-3 bg-white border border-stone-200 rounded-xl space-y-1 text-xs">
+                  {/* Profile Card / In-place Edit Form */}
+                  {isEditingProfile ? (
+                    <div className="p-3.5 bg-white border border-amber-400 rounded-2xl shadow-xs space-y-3 text-xs">
+                      <div className="flex items-center justify-between pb-2 border-b border-stone-100">
+                        <span className="font-bold text-stone-900 flex items-center space-x-1.5">
+                          <User className="w-3.5 h-3.5 text-amber-700" />
+                          <span>Edit Tenant Profile</span>
+                        </span>
+                        <button
+                          onClick={() => setIsEditingProfile(false)}
+                          className="text-stone-400 hover:text-stone-600"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div>
+                          <label className="block text-[10px] font-bold text-stone-500 uppercase">Full Name</label>
+                          <input
+                            type="text"
+                            value={editProfileDraft.name}
+                            onChange={(e) => setEditProfileDraft({ ...editProfileDraft, name: e.target.value })}
+                            className="w-full mt-0.5 px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg font-bold text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-stone-500 uppercase">Email Address</label>
+                          <input
+                            type="email"
+                            value={editProfileDraft.email}
+                            onChange={(e) => setEditProfileDraft({ ...editProfileDraft, email: e.target.value })}
+                            className="w-full mt-0.5 px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-stone-500 uppercase">Phone Number (MFA OTP & MoMo)</label>
+                          <input
+                            type="text"
+                            value={editProfileDraft.phone}
+                            onChange={(e) => setEditProfileDraft({ ...editProfileDraft, phone: e.target.value })}
+                            className="w-full mt-0.5 px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg font-mono text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-stone-500 uppercase">Emergency Contact</label>
+                          <input
+                            type="text"
+                            value={editProfileDraft.emergencyContact}
+                            onChange={(e) => setEditProfileDraft({ ...editProfileDraft, emergencyContact: e.target.value })}
+                            className="w-full mt-0.5 px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-stone-500 uppercase">Payment MFA Channel</label>
+                          <div className="grid grid-cols-2 gap-2 mt-1">
+                            <button
+                              type="button"
+                              onClick={() => setEditProfileDraft({ ...editProfileDraft, preferredMfa: 'phone' })}
+                              className={`py-1.5 px-2 rounded-lg text-center font-bold text-[11px] border transition-all ${
+                                editProfileDraft.preferredMfa === 'phone'
+                                  ? 'bg-amber-50 border-amber-500 text-amber-900'
+                                  : 'bg-stone-50 border-stone-200 text-stone-600'
+                              }`}
+                            >
+                              SMS Phone OTP
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditProfileDraft({ ...editProfileDraft, preferredMfa: 'email' })}
+                              className={`py-1.5 px-2 rounded-lg text-center font-bold text-[11px] border transition-all ${
+                                editProfileDraft.preferredMfa === 'email'
+                                  ? 'bg-amber-50 border-amber-500 text-amber-900'
+                                  : 'bg-stone-50 border-stone-200 text-stone-600'
+                              }`}
+                            >
+                              Email Code
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2 pt-2 border-t border-stone-100">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTenantProfile({ ...editProfileDraft });
+                            setIsEditingProfile(false);
+                            showSecurityNotification('Mobile Profile updated: Contact & OTP preferences saved.');
+                          }}
+                          className="flex-1 py-2 bg-amber-700 hover:bg-amber-800 text-white rounded-xl font-bold text-xs flex items-center justify-center space-x-1.5 shadow-2xs"
+                        >
+                          <Save className="w-3.5 h-3.5" />
+                          <span>Save Changes</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingProfile(false)}
+                          className="px-3 py-2 bg-stone-100 text-stone-700 rounded-xl font-medium text-xs hover:bg-stone-200"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3.5 bg-white border border-stone-200 rounded-2xl shadow-2xs space-y-2.5 text-xs">
+                      <div className="flex items-center space-x-3 pb-2 border-b border-stone-100">
+                        <div className="w-10 h-10 rounded-xl bg-amber-700 text-white flex items-center justify-center font-bold text-sm shadow-2xs">
+                          {tenantProfile.name.charAt(0)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-stone-900 text-sm truncate">{tenantProfile.name}</div>
+                          <div className="text-[11px] text-stone-500 font-mono truncate">{tenantProfile.email}</div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5 pt-1 text-stone-700">
+                        <div className="flex items-center justify-between">
+                          <span className="text-stone-500">Phone:</span>
+                          <span className="font-mono font-bold text-stone-900">{tenantProfile.phone}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-stone-500">Lease:</span>
+                          <span className="font-semibold text-stone-900">{tenantProfile.property} · {tenantProfile.unit}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-stone-500">Emergency:</span>
+                          <span className="text-[11px] text-stone-600 truncate max-w-[170px]">{tenantProfile.emergencyContact}</span>
+                        </div>
+                        <div className="flex items-center justify-between pt-1 border-t border-stone-100">
+                          <span className="text-stone-500">Payment MFA:</span>
+                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-bold text-[10px] font-mono">
+                            {tenantProfile.preferredMfa === 'phone' ? 'Phone SMS OTP' : 'Email Code'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Payment Method Card */}
+                  <div className="p-3 bg-white border border-stone-200 rounded-2xl space-y-1.5 text-xs shadow-2xs">
                     <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
-                      Payment method
+                      Default Payment Method
                     </div>
                     <div className="flex items-center justify-between font-mono font-bold text-stone-900">
-                      <span>•••• 4821</span>
-                      <span className="text-[10px] text-stone-500">Default</span>
+                      <span>•••• 4821 (Visa Gold)</span>
+                      <span className="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-800 rounded font-semibold">Active</span>
                     </div>
-                    <div className="text-[10px] text-stone-500">Autopay on the 1st · toggle in settings</div>
+                    <div className="text-[10px] text-stone-500">
+                      Autopay on the 1st · Mobile Money or Card fallback
+                    </div>
                   </div>
 
-                  <div className="p-3 bg-white border border-stone-200 rounded-xl space-y-3 text-xs">
-                    <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
-                      Settings
+                  {/* App Settings Card */}
+                  <div className="p-3.5 bg-white border border-stone-200 rounded-2xl space-y-3 text-xs shadow-2xs">
+                    <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider flex items-center justify-between">
+                      <span>Mobile App Settings</span>
+                      <Settings className="w-3.5 h-3.5 text-stone-400" />
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span>Push notifications</span>
+
+                    {/* Preferred Currency Selector */}
+                    <div>
+                      <div className="text-[11px] font-bold text-stone-700 mb-1">Display Currency</div>
+                      <div className="grid grid-cols-4 gap-1.5 font-mono text-[11px] font-bold">
+                        {(['USD', 'EUR', 'GBP', 'XAF'] as SupportedCurrency[]).map((cur) => (
+                          <button
+                            key={cur}
+                            type="button"
+                            onClick={() => {
+                              handleSelectCurrency(cur);
+                              showSecurityNotification(`Mobile currency set to ${cur}. Rent display updated.`);
+                            }}
+                            className={`py-1.5 rounded-lg border transition-all text-center ${
+                              tenantCurrency === cur
+                                ? 'bg-amber-700 text-white border-amber-700 shadow-2xs'
+                                : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100'
+                            }`}
+                          >
+                            {cur}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Language Selector */}
+                    <div className="flex items-center justify-between pt-1 border-t border-stone-100">
+                      <span className="font-medium text-stone-700">App Language</span>
+                      <div className="flex items-center space-x-1 font-mono text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => setAppLanguage('en')}
+                          className={`px-2 py-0.5 rounded ${appLanguage === 'en' ? 'bg-stone-900 text-white font-bold' : 'text-stone-500'}`}
+                        >
+                          EN
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAppLanguage('fr')}
+                          className={`px-2 py-0.5 rounded ${appLanguage === 'fr' ? 'bg-stone-900 text-white font-bold' : 'text-stone-500'}`}
+                        >
+                          FR
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Push Notifications Toggle */}
+                    <div className="flex items-center justify-between pt-1 border-t border-stone-100">
+                      <div>
+                        <span className="font-medium text-stone-800">Push Notifications</span>
+                        <div className="text-[10px] text-stone-500">Maintenance & payment alerts</div>
+                      </div>
                       <button
-                        onClick={() => setPushEnabled(!pushEnabled)}
-                        className={`w-9 h-5 rounded-full transition-colors relative ${
+                        type="button"
+                        onClick={() => {
+                          setPushEnabled(!pushEnabled);
+                          showSecurityNotification(`Push notifications ${!pushEnabled ? 'enabled' : 'muted'}.`);
+                        }}
+                        className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${
                           pushEnabled ? 'bg-amber-700' : 'bg-stone-300'
                         }`}
                       >
@@ -862,22 +1107,94 @@ export const TenantMobileView: React.FC = () => {
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <span>Rent reminders</span>
-                      <span className="text-[11px] font-medium text-amber-800">3 days before</span>
+                    {/* SMS Alerts Toggle */}
+                    <div className="flex items-center justify-between pt-1 border-t border-stone-100">
+                      <div>
+                        <span className="font-medium text-stone-800">SMS Alerts</span>
+                        <div className="text-[10px] text-stone-500">Critical lease & security SMS</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSmsAlerts(!smsAlerts);
+                          showSecurityNotification(`SMS alerts ${!smsAlerts ? 'enabled' : 'disabled'}.`);
+                        }}
+                        className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${
+                          smsAlerts ? 'bg-amber-700' : 'bg-stone-300'
+                        }`}
+                      >
+                        <span
+                          className={`w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 transition-transform ${
+                            smsAlerts ? 'right-0.5' : 'left-0.5'
+                          }`}
+                        />
+                      </button>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <span>Face ID unlock</span>
+                    {/* Rent Reminders & Lead Days */}
+                    <div className="flex items-center justify-between pt-1 border-t border-stone-100">
+                      <div>
+                        <span className="font-medium text-stone-800">Rent Reminders</span>
+                        <div className="text-[10px] text-stone-500">Notification before due date</div>
+                      </div>
+                      <select
+                        value={rentReminderDays}
+                        onChange={(e) => {
+                          setRentReminderDays(Number(e.target.value));
+                          showSecurityNotification(`Rent reminder set to ${e.target.value} days before due date.`);
+                        }}
+                        className="px-2 py-1 bg-stone-50 border border-stone-200 rounded-lg font-bold text-amber-900 text-[11px]"
+                      >
+                        <option value={1}>1 day before</option>
+                        <option value={3}>3 days before</option>
+                        <option value={5}>5 days before</option>
+                        <option value={7}>7 days before</option>
+                      </select>
+                    </div>
+
+                    {/* Face ID / Biometrics */}
+                    <div className="flex items-center justify-between pt-1 border-t border-stone-100">
+                      <div>
+                        <span className="font-medium text-stone-800">Biometric Unlock</span>
+                        <div className="text-[10px] text-stone-500">Face ID / Fingerprint simulation</div>
+                      </div>
                       <button
-                        onClick={() => setFaceIdEnabled(!faceIdEnabled)}
-                        className={`w-9 h-5 rounded-full transition-colors relative ${
+                        type="button"
+                        onClick={() => {
+                          setFaceIdEnabled(!faceIdEnabled);
+                          showSecurityNotification(`Biometric unlock ${!faceIdEnabled ? 'activated' : 'deactivated'}.`);
+                        }}
+                        className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${
                           faceIdEnabled ? 'bg-amber-700' : 'bg-stone-300'
                         }`}
                       >
                         <span
                           className={`w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 transition-transform ${
                             faceIdEnabled ? 'right-0.5' : 'left-0.5'
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Audible Sound Chimes */}
+                    <div className="flex items-center justify-between pt-1 border-t border-stone-100">
+                      <div>
+                        <span className="font-medium text-stone-800">Audible Chimes</span>
+                        <div className="text-[10px] text-stone-500">Sound on payment confirmation</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSoundEnabled(!soundEnabled);
+                          showSecurityNotification(`Sound chimes ${!soundEnabled ? 'on' : 'muted'}.`);
+                        }}
+                        className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${
+                          soundEnabled ? 'bg-amber-700' : 'bg-stone-300'
+                        }`}
+                      >
+                        <span
+                          className={`w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 transition-transform ${
+                            soundEnabled ? 'right-0.5' : 'left-0.5'
                           }`}
                         />
                       </button>
@@ -939,6 +1256,149 @@ export const TenantMobileView: React.FC = () => {
                 <User className="w-4 h-4 mb-0.5" />
                 <span>Profile</span>
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+        {/* Right Column (50% Equal Section): Resident Account & Lease Intelligence Console */}
+        <div className="space-y-6">
+          {/* Lease Overview Card */}
+          <div className="bg-white border border-stone-200 rounded-2xl p-6 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+                  4B
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-stone-900">Unit 4B · Oak Residence</h2>
+                  <p className="text-xs text-stone-500 font-mono">Tenant: Jordan Avery · Active Lease</p>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                Current · In Good Standing
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-100">
+                <div className="text-[10px] text-stone-500 font-bold uppercase font-mono">Monthly Rent</div>
+                <div className="text-base font-black text-stone-900 font-mono mt-0.5">$1,450.00</div>
+                <div className="text-[10px] text-stone-500">Due 1st of month</div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-100">
+                <div className="text-[10px] text-stone-500 font-bold uppercase font-mono">Escrow Deposit</div>
+                <div className="text-base font-black text-amber-900 font-mono mt-0.5">$1,450.00</div>
+                <div className="text-[10px] text-emerald-700 font-medium">+2.85% APY yield</div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-100 col-span-2 sm:col-span-1">
+                <div className="text-[10px] text-stone-500 font-bold uppercase font-mono">Lease Expiry</div>
+                <div className="text-base font-black text-stone-900 font-mono mt-0.5">Dec 31, 2026</div>
+                <div className="text-[10px] text-stone-500">3 months remaining</div>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950 flex items-start space-x-2.5">
+              <ShieldCheck className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold">Statutory Escrow Segregation Notice:</span> Your security deposit is held in a segregated client trust account under statutory regulations earning 2.85% annual yield with zero landlord commingling.
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Payment Dispatch Center */}
+          <div className="bg-white border border-stone-200 rounded-2xl p-6 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+              <h2 className="text-base font-bold text-stone-900">Direct Payment Gateways</h2>
+              <span className="text-xs text-stone-400 font-mono">Zero Fee</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                onClick={() => {
+                  setSelectedGatewayId('mtn_momo');
+                  setMobileMoneyModalOpen(true);
+                }}
+                className="p-3.5 rounded-xl border border-stone-200 hover:border-amber-400 bg-stone-50 hover:bg-amber-50/50 transition-all text-left flex items-center justify-between group cursor-pointer"
+              >
+                <div>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#FFCC00]"></span>
+                    <span className="text-xs font-bold text-stone-900 group-hover:text-amber-900">MTN Mobile Money</span>
+                  </div>
+                  <div className="text-[11px] text-stone-500 font-mono mt-0.5">*126# USSD Push Notification</div>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-amber-700 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+
+              <button
+                onClick={() => {
+                  setSelectedGatewayId('orange_money');
+                  setMobileMoneyModalOpen(true);
+                }}
+                className="p-3.5 rounded-xl border border-stone-200 hover:border-amber-400 bg-stone-50 hover:bg-amber-50/50 transition-all text-left flex items-center justify-between group cursor-pointer"
+              >
+                <div>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#FF7900]"></span>
+                    <span className="text-xs font-bold text-stone-900 group-hover:text-amber-900">Orange Money</span>
+                  </div>
+                  <div className="text-[11px] text-stone-500 font-mono mt-0.5">#150# USSD Fast Approval</div>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-amber-700 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+          </div>
+
+          {/* Verified HMAC Receipts Archive */}
+          <div className="bg-white border border-stone-200 rounded-2xl p-6 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+              <div>
+                <h2 className="text-base font-bold text-stone-900">Tamper-Evident Receipts</h2>
+                <p className="text-xs text-stone-500">Cryptographically sealed PDF downloads</p>
+              </div>
+              <span className="text-xs font-bold text-amber-800 font-mono">{tenantReceipts.length} Issued</span>
+            </div>
+
+            <div className="space-y-2.5">
+              {tenantReceipts.map((receipt) => (
+                <div
+                  key={receipt.id}
+                  className="p-3 rounded-xl border border-stone-100 hover:border-amber-300 bg-stone-50/60 transition-all flex items-center justify-between text-xs"
+                >
+                  <div className="space-y-0.5">
+                    <div className="font-extrabold text-stone-900 font-mono flex items-center space-x-2">
+                      <span>{receipt.receiptNumber}</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800">Verified</span>
+                    </div>
+                    <div className="text-[11px] text-stone-500 font-mono">
+                      {receipt.issuedAt} · {receipt.paymentMethod}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <span className="font-black font-mono text-stone-900">
+                      ${receipt.amountPaid.toFixed(2)}
+                    </span>
+                    <button
+                      onClick={() => openReceiptPreview(receipt)}
+                      className="p-1.5 rounded-lg bg-white border border-stone-200 hover:border-amber-400 text-stone-700 hover:text-amber-900 transition-colors shadow-2xs cursor-pointer"
+                      title="Preview receipt"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => downloadReceipt(receipt)}
+                      className="p-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white transition-colors shadow-2xs cursor-pointer"
+                      title="Download PDF"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

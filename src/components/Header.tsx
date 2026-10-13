@@ -14,11 +14,16 @@ import {
   Coins,
   Globe,
   Smartphone,
+  Settings,
+  User,
+  Home,
+  LogOut,
 } from 'lucide-react';
 import { useSecurity } from '../context/SecurityContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { INITIAL_ORG, INITIAL_USERS, INITIAL_NOTIFICATIONS } from '../data/estateData';
 import { UserRole, SystemNotification, SupportedCurrency } from '../types';
+import { ProfileSettingsModal } from './ProfileSettingsModal';
 
 interface HeaderProps {
   onOpenQuickAction?: (actionType: 'property' | 'payment' | 'request' | 'invite' | 'momo') => void;
@@ -26,6 +31,8 @@ interface HeaderProps {
   notifications?: SystemNotification[];
   onMarkNotificationRead?: (id: string) => void;
   activeTab?: string;
+  onNavigateLanding?: () => void;
+  onOpenLoginModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -33,6 +40,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSecurityModal = () => {},
   notifications = INITIAL_NOTIFICATIONS,
   onMarkNotificationRead = () => {},
+  onNavigateLanding,
+  onOpenLoginModal,
 }) => {
   const {
     currentUser,
@@ -43,12 +52,15 @@ export const Header: React.FC<HeaderProps> = ({
     loginSession,
     lockSession,
     openMfaChallenge,
+    users,
   } = useSecurity();
   const { activeCurrency, setActiveCurrency, currencies } = useCurrency();
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
   const [showCurrencyMenu, setShowCurrencyMenu] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [profileModalTab, setProfileModalTab] = useState<'profile' | 'settings'>('profile');
 
   const unreadCount = notifications.filter((n) => n.unread).length;
   const activeControlsCount = securityControls.filter((c) => c.active).length;
@@ -95,6 +107,19 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Right Action Elements: Security Status, Notifications, Role Switcher, Quick Actions */}
           <div className="flex items-center space-x-2 sm:space-x-3">
+            {/* Landing Page Home Button */}
+            {onNavigateLanding && (
+              <button
+                type="button"
+                onClick={onNavigateLanding}
+                className="inline-flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 border border-stone-200 transition-colors shadow-2xs cursor-pointer"
+                title="Return to Public Landing Page & Persona Showcase"
+              >
+                <Home className="w-3.5 h-3.5 text-stone-600" />
+                <span className="hidden md:inline">Landing Page</span>
+              </button>
+            )}
+
             {/* Multi-Currency Selector Dropdown */}
             <div className="relative">
               <button
@@ -376,13 +401,57 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
 
               {showRoleMenu && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-stone-200 py-2 z-50">
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-stone-200 py-2 z-50">
+                  {/* Current User Header & Profile Quick Edit */}
+                  <div className="px-3 pb-2 pt-1 border-b border-stone-100 flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ${currentUser.avatarColor}`}>
+                        {currentUser.name.charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-stone-900 text-xs truncate max-w-[150px]">{currentUser.name}</div>
+                        <div className="text-[10px] text-stone-500 truncate max-w-[150px]">{currentUser.email}</div>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">
+                      {currentUser.role}
+                    </span>
+                  </div>
+
+                  {/* Profile & Settings Buttons */}
+                  <div className="p-2 border-b border-stone-100 bg-stone-50/60 flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowRoleMenu(false);
+                        setProfileModalTab('profile');
+                        setIsProfileModalOpen(true);
+                      }}
+                      className="flex-1 py-1.5 px-2 rounded-lg bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/40 text-stone-800 text-[11px] font-bold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer shadow-2xs"
+                    >
+                      <User className="w-3.5 h-3.5 text-amber-700" />
+                      <span>Edit Profile</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowRoleMenu(false);
+                        setProfileModalTab('settings');
+                        setIsProfileModalOpen(true);
+                      }}
+                      className="flex-1 py-1.5 px-2 rounded-lg bg-white border border-stone-200 hover:border-amber-400 hover:bg-amber-50/40 text-stone-800 text-[11px] font-bold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer shadow-2xs"
+                    >
+                      <Settings className="w-3.5 h-3.5 text-stone-600" />
+                      <span>App Settings</span>
+                    </button>
+                  </div>
+
                   <div className="px-3 py-1.5 border-b border-stone-100">
                     <p className="text-xs font-bold text-stone-900">Least-Privilege RBAC Role</p>
                     <p className="text-[11px] text-stone-500">Switch role to test access boundaries across all 8 modules:</p>
                   </div>
-                  <div className="divide-y divide-stone-100 max-h-72 overflow-y-auto">
-                    {INITIAL_USERS.map((user) => (
+                  <div className="divide-y divide-stone-100 max-h-64 overflow-y-auto">
+                    {users.map((user) => (
                       <button
                         key={user.id}
                         onClick={() => {
@@ -441,13 +510,48 @@ export const Header: React.FC<HeaderProps> = ({
                       <Lock className="w-3.5 h-3.5 text-amber-400" />
                       <span>Lock</span>
                     </button>
+
+                    {onNavigateLanding && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowRoleMenu(false);
+                          onNavigateLanding();
+                        }}
+                        className="py-1 px-2.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 text-[11px] font-bold flex items-center space-x-1 transition-colors cursor-pointer"
+                        title="Sign out and return to Landing Page"
+                      >
+                        <LogOut className="w-3.5 h-3.5 text-rose-700" />
+                        <span>Sign Out</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
             </div>
+
+            {/* Direct App Settings Quick Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setProfileModalTab('settings');
+                setIsProfileModalOpen(true);
+              }}
+              className="p-2 rounded-lg border border-stone-200 hover:border-stone-300 bg-stone-50 hover:bg-stone-100 text-stone-600 transition-colors cursor-pointer shadow-2xs"
+              title="Application Settings & Preferences"
+            >
+              <Settings className="w-4 h-4 text-stone-600" />
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Profile & App Settings Modal */}
+      <ProfileSettingsModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        initialTab={profileModalTab}
+      />
     </header>
   );
 };

@@ -492,10 +492,10 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
         </div>
       </div>
 
-      {/* Main Grid: Revenue & Rent Collection Chart vs Urgent Maintenance */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Revenue & Rent Collection */}
-        <div className="lg:col-span-2 bg-white border border-stone-200 p-6 rounded-2xl shadow-2xs flex flex-col justify-between">
+      {/* Main Grid: Revenue & Rent Collection vs Urgent Maintenance (Equal 50/50 View Sections) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        {/* Left Column (50% Equal Section): Revenue & Rent Collection */}
+        <div className="bg-white border border-stone-200 p-6 rounded-2xl shadow-2xs flex flex-col justify-between">
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-4 border-b border-stone-100">
               <div>
@@ -654,86 +654,95 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
         </div>
       </div>
 
-      {/* Second Row: Lease Expirations, Notifications, Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Lease Expirations (Next 90 Days) */}
-        <div className="bg-white border border-stone-200 p-6 rounded-2xl shadow-2xs">
-          <div className="flex items-center justify-between pb-3 border-b border-stone-100">
-            <h2 className="text-base font-bold text-stone-900">Lease expirations</h2>
-            <span className="text-xs font-medium text-stone-500">Next 90 days</span>
+      {/* Second Row: Equal 50/50 View Sections on Both Sides */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* Left Column (50% Equal Section): Lease Expirations (Next 90 Days) */}
+        <div className="bg-white border border-stone-200 p-6 rounded-2xl shadow-2xs h-full flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+              <h2 className="text-base font-bold text-stone-900">Lease expirations</h2>
+              <span className="text-xs font-medium text-stone-500">Next 90 days</span>
+            </div>
+
+            <div className="mt-4 divide-y divide-stone-100">
+              {LEASE_EXPIRATIONS.map((lease) => {
+                const alreadySent = renewalSentUnits.includes(lease.unit);
+                return (
+                  <div key={lease.id} className="py-3 flex items-center justify-between first:pt-0 last:pb-0">
+                    <div>
+                      <div className="text-xs font-bold text-stone-900">
+                        {lease.unit} · {lease.property}
+                      </div>
+                      <div className="text-[11px] text-stone-500">{lease.tenantName}</div>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="inline-block px-2 py-0.5 text-xs font-mono font-semibold bg-amber-100 text-amber-900 rounded">
+                        {lease.expiryDate.slice(0, 6)}
+                      </span>
+                      <div className="mt-1">
+                        {alreadySent ? (
+                          <span className="text-[10px] font-medium text-emerald-600 flex items-center justify-end">
+                            <CheckCircle2 className="w-3 h-3 mr-0.5" /> Offer sent
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleSendRenewal(lease.unit, lease.tenantName)}
+                            className="text-[10px] font-semibold text-amber-700 hover:text-amber-900 hover:underline flex items-center justify-end"
+                          >
+                            <Send className="w-2.5 h-2.5 mr-0.5" /> Send renewal
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="mt-4 divide-y divide-stone-100">
-            {LEASE_EXPIRATIONS.map((lease) => {
-              const alreadySent = renewalSentUnits.includes(lease.unit);
-              return (
-                <div key={lease.id} className="py-3 flex items-center justify-between first:pt-0 last:pb-0">
-                  <div>
-                    <div className="text-xs font-bold text-stone-900">
-                      {lease.unit} · {lease.property}
-                    </div>
-                    <div className="text-[11px] text-stone-500">{lease.tenantName}</div>
-                  </div>
-
-                  <div className="text-right">
-                    <span className="inline-block px-2 py-0.5 text-xs font-mono font-semibold bg-amber-100 text-amber-900 rounded">
-                      {lease.expiryDate.slice(0, 6)}
-                    </span>
-                    <div className="mt-1">
-                      {alreadySent ? (
-                        <span className="text-[10px] font-medium text-emerald-600 flex items-center justify-end">
-                          <CheckCircle2 className="w-3 h-3 mr-0.5" /> Offer sent
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => handleSendRenewal(lease.unit, lease.tenantName)}
-                          className="text-[10px] font-semibold text-amber-700 hover:text-amber-900 hover:underline flex items-center justify-end"
-                        >
-                          <Send className="w-2.5 h-2.5 mr-0.5" /> Send renewal
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="pt-4 mt-2 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500 font-mono">
+            <span>Automated 30/60/90D Escalation</span>
+            <span className="font-bold text-emerald-700">94.8% Renewal Rate</span>
           </div>
         </div>
 
-        {/* Notifications (3 New) */}
-        <div className="bg-white border border-stone-200 p-6 rounded-2xl shadow-2xs">
-          <div className="flex items-center justify-between pb-3 border-b border-stone-100">
-            <h2 className="text-base font-bold text-stone-900">Notifications</h2>
-            <span className="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-900 rounded-full">
-              3 new
-            </span>
-          </div>
+        {/* Right Column (50% Equal Section): Notifications & Quick Jump Actions */}
+        <div className="space-y-6">
+          {/* Notifications Card */}
+          <div className="bg-white border border-stone-200 p-6 rounded-2xl shadow-2xs">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+              <h2 className="text-base font-bold text-stone-900">Notifications</h2>
+              <span className="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-900 rounded-full">
+                3 new
+              </span>
+            </div>
 
-          <div className="mt-4 space-y-3">
-            {INITIAL_NOTIFICATIONS.map((notif) => (
-              <div key={notif.id} className="text-xs p-2.5 rounded-xl bg-stone-50 border border-stone-100">
-                <div className="flex items-start space-x-2">
-                  <span className="w-2 h-2 mt-1 rounded-full bg-amber-600 flex-shrink-0"></span>
-                  <div>
-                    <p className="text-stone-800 leading-snug">{notif.description}</p>
-                    <span className="text-[10px] text-stone-400 font-mono mt-1 block">
-                      {notif.timeAgo}
-                    </span>
+            <div className="mt-4 space-y-3">
+              {INITIAL_NOTIFICATIONS.map((notif) => (
+                <div key={notif.id} className="text-xs p-2.5 rounded-xl bg-stone-50 border border-stone-100">
+                  <div className="flex items-start space-x-2">
+                    <span className="w-2 h-2 mt-1 rounded-full bg-amber-600 flex-shrink-0"></span>
+                    <div>
+                      <p className="text-stone-800 leading-snug">{notif.description}</p>
+                      <span className="text-[10px] text-stone-400 font-mono mt-1 block">
+                        {notif.timeAgo}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Quick Actions (Jump to) */}
-        <div className="bg-white border border-stone-200 p-6 rounded-2xl shadow-2xs">
-          <div className="flex items-center justify-between pb-3 border-b border-stone-100">
-            <h2 className="text-base font-bold text-stone-900">Quick actions</h2>
-            <span className="text-xs font-medium text-stone-400">Jump to</span>
+              ))}
+            </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-2.5">
+          {/* Quick Actions (Jump to) */}
+          <div className="bg-white border border-stone-200 p-6 rounded-2xl shadow-2xs">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+              <h2 className="text-base font-bold text-stone-900">Quick actions</h2>
+              <span className="text-xs font-medium text-stone-400">Jump to</span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2.5">
             <button
               onClick={() => onOpenQuickAction('property')}
               className="p-3 text-left rounded-xl border border-stone-200 hover:border-amber-400 hover:bg-amber-50/40 transition-all group"
@@ -790,9 +799,28 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                 Collect rent via MTN MoMo or Orange Money with real-time USSD push
               </div>
             </button>
+
+            <button
+              onClick={() => onNavigateTab('finance')}
+              className="p-3 text-left rounded-xl border border-stone-200 bg-stone-50/60 hover:border-amber-400 hover:bg-amber-50/50 transition-all group col-span-2 cursor-pointer"
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-bold text-stone-900 group-hover:text-amber-900 flex items-center space-x-1.5">
+                  <span>⚡ Fintech Hub & Multi-Currency Treasury</span>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-900 px-1.5 py-0.2 rounded font-bold font-mono">
+                    2.85% APY Escrow
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold text-amber-800">Explore →</span>
+              </div>
+              <div className="text-[10px] text-stone-600 mt-0.5">
+                Virtual maintenance cards, statutory deposit escrow yields, RNPL advances, and interbank FX swaps
+              </div>
+            </button>
           </div>
         </div>
       </div>
+    </div>
 
       {/* Demo Environment Notice Banner (Exact wording from document) */}
       <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl flex items-center justify-between text-xs text-amber-900">

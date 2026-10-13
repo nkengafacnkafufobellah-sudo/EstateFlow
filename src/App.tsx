@@ -264,7 +264,7 @@ const AppContent: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-            <span className="font-medium text-stone-700">Signed in as Fobellah N. · Owner role</span>
+            <span className="font-medium text-stone-700">Signed in as {currentUser.name} · {currentUser.roleTitle}</span>
             <span className="text-stone-300">•</span>
             <span className="text-stone-500">{INITIAL_ORG.name}</span>
           </div>
